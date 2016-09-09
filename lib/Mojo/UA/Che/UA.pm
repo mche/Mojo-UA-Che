@@ -1,7 +1,7 @@
 package Mojo::UA::Che::UA;
 use Mojo::Base -base;
 
-has [qw(top ua)];
+has [qw(top ua max_try)];
 
 #text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 has headers => sub {

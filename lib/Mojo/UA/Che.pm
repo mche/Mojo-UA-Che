@@ -36,7 +36,7 @@ has proxy_not => sub {[]};
 sub ua {
   my $self = shift;
   
-  return $self->ua_class->new(ua => $self->_dequeue, top => $self);
+  return $self->ua_class->new(ua => $self->_dequeue, top => $self, max_try => $self->max_try);
   
 }
 
@@ -47,6 +47,7 @@ sub mojo_ua {
   # Ignore all cookies
   $ua->cookie_jar->ignore(sub { 1 })
     if $self->cookie_ignore;
+    
   $ua->max_redirects($self->max_redirects);
   # Change name of user agent
   $ua->transactor->name($self->ua_name)
