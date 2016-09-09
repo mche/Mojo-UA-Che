@@ -60,6 +60,12 @@ sub request {
         if  $self->proxy_handler;
       die "Бан $res";
     }
+    elsif ($res =~ /отказано/) {
+      #~ $self->top->dump($tx->req)
+      die "Критичная ошибка [$res]";
+        #~ if  && !$self->proxy_handler;
+      
+    }
     
     print STDERR " попытка @{[$_+1 ]} причина[$res]...\n"
       unless $_ eq $self->max_try;
@@ -88,12 +94,6 @@ sub _request {
       my $err = $tx->error;
       $res = $err->{code} || $err->{message};
       utf8::decode($res);
-      #~ print STDERR  "не смог: $res\n"
-        #~ if $self->debug;
-      
-      $self->top->dump($tx->req)
-        and die "Критичная ошибка"
-        if $res =~ /отказано/ && !$self->proxy_handler;
       
     }
     
