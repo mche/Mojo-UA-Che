@@ -40,6 +40,12 @@ sub ua {
   
 }
 
+sub request {
+  my $self = shift;
+  $self->ua->request(@_);
+  
+}
+
 
 sub mojo_ua {
   my $self = shift;
