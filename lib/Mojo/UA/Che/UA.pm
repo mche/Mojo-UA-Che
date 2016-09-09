@@ -1,7 +1,7 @@
 package Mojo::UA::Che::UA;
 use Mojo::Base -base;
 
-has [qw(top ua max_try)];
+has [qw(top ua max_try debug)];
 
 #text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 has headers => sub {
@@ -68,6 +68,47 @@ sub request {
     and return $self->request(@_);
   
   return $res;
+}
+
+sub _request {
+  my ($self, $meth, $url, $headers) = map(shift, 0..3);
+  my $ua = $self->ua;
+  my ($res);
+  
+  print STDERR "Запрос $meth $url ..."
+    if $self->debug;
+  
+  my $delay = Mojo::IOLoop->delay(
+    sub { 
+      my $delay = shift;
+      $ua->$meth($url => $self->merge_headers(%$headers), @_, $delay->begin);
+    },
+    sub {
+      my ($delay, $tx) = @_;
+      
+      #~ print STDERR dumper($tx->req)
+      $self->dump($tx->req)
+        if $self->debug && $self->debug eq '2';
+      
+      unless ($tx && $tx->success) {
+        my $err = $tx->error;
+        $res = $err->{code} || $err->{message};
+        utf8::decode($res);
+        #~ print STDERR  "не смог: $res\n"
+          #~ if $self->debug;
+        
+        $self->dump($tx->req)
+          and die "Критичная ошибка"
+          if $res =~ /отказано/ && !$self->proxy_handler;
+        
+        return $res;
+      }
+      
+      $res = $tx->res;
+    },
+  );
+  $delay->wait unless $delay->ioloop->is_running;
+  $res;
 }
 
 1;
