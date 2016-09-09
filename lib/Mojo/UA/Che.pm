@@ -3,8 +3,6 @@ package Mojo::UA::Che;
 use Mojo::Base -base;
 use Mojo::UserAgent;
 
-#text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-has headers => sub { {Accept=>'*/*', 'Accept-Encoding'=>'gzip, deflate', 'Accept-Language'=>'en-US;q=0.8,en;q=0.6', 'Cache-Control'=>'max-age=0', }};#Connection=>'keep-alive',
 
 my @ua_name = (
 #http://digitorum.ru/blog/2012/12/02/User-Agent-Poiskovye-boty.phtml
@@ -12,14 +10,14 @@ my @ua_name = (
 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
 'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
 'Googlebot/2.1 (+http://www.google.com/bot.html)',
-  'Googlebot-Video/1.0',
-  'Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)',
-  'Mozilla/5.0 (compatible; YandexMedia/3.0; +http://yandex.com/bots)',
-  'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)',
+'Googlebot-Video/1.0',
+'Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)',
+'Mozilla/5.0 (compatible; YandexMedia/3.0; +http://yandex.com/bots)',
+'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)',
   
 );
 
-has ua_name => sub {$ua_name[rand @ua_name];};
+sub ua_name {$ua_name[rand @ua_name];};
 
 has max_redirects => 3;
 
@@ -29,9 +27,7 @@ has max_queque => 0; # 0 - неограниченное количество а�
 
 has ua_class => 'Mojo::UA::Che::UA';
 
-has debug => 0;
-
-has [qw'proxy_module proxy connect_timeout'];
+has [qw'debug proxy_module proxy connect_timeout cookie_ignore'];
 
 has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; $self->proxy_module->new};
 
@@ -49,7 +45,8 @@ sub mojo_ua {
   my $self = shift;
   my $ua = Mojo::UserAgent->new;
   # Ignore all cookies
-  $ua->cookie_jar->ignore(sub { 1 });
+  $ua->cookie_jar->ignore(sub { 1 })
+    if $self->cookie_ignore;
   $ua->max_redirects($self->max_redirects);
   # Change name of user agent
   $ua->transactor->name($self->ua_name)
@@ -100,10 +97,11 @@ sub _enqueue {
   my $queue = $self->{queue} ||= [];
   #~ warn "queue++ $dbh:", scalar @$queue and
   push @$queue, $ua
-    if @$queue < $self->max_queque;
+    if $self->max_queque && @$queue < $self->max_queque;
   #~ shift @$queue while @$queue > $self->max_connections;
 }
 
+sub dump {shift; say STDERR dumper(@_);}
 
 =pod
 
