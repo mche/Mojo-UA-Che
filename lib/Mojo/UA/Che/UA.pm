@@ -16,11 +16,15 @@ has headers => sub {
 
 sub DESTROY {
   my $self = shift;
+  
+  #~ warn "DESTROY";
 
   #~ my $waiting = $self->{waiting};
   #~ $waiting->{cb}($self, 'Premature connection close', undef) if $waiting->{cb};
 
-  return unless (my $top = $self->top) && (my $ua = $self->ua);
+  warn "(on destroy) Bad enqueue ua"
+    and return
+    unless (my $top = $self->top) && (my $ua = $self->ua);
   $top->_enqueue($ua);
 }
 
@@ -44,10 +48,10 @@ sub request {
     $self->top->change_proxy($ua)
       or warn "Не смог выставить прокси через proxy_handler"
       and return
-      if ! ($ua_proxy->https ||  $ua_proxy->http) && $self->proxy_handler;
+      if ! ($ua_proxy->https ||  $ua_proxy->http) && $self->top->proxy_handler;
     
     $res = $self->_request(@_)
-      or return;
+      or return '???';
     
     if (ref $res || $res =~ m'404') {
       $self->top->proxy_handler->good_proxy($ua_proxy->https ||  $ua_proxy->http)
@@ -84,7 +88,7 @@ sub _request {
   my $_cb = sub {
     my ($ua, $tx) = @_;
     #~ print STDERR dumper($tx->req)
-    my $res = $tx->res;
+    $res = $tx->res;
     
     $self->top->dump($tx->req)
       if $self->debug && $self->debug eq '2';
@@ -95,7 +99,7 @@ sub _request {
       utf8::decode($res);
       
     }
-    
+    Mojo::IOLoop->stop;
     return $res;
     
   } unless $cb;#if delete $headers->{Async};

@@ -1,6 +1,7 @@
 package Mojo::UA::Che;
 
 use Mojo::Base -base;
+use Mojo::UA::Che::UA;
 use Mojo::UserAgent;
 
 
@@ -96,7 +97,8 @@ sub _dequeue {
   my $self = shift;
 
   my $ua = shift @{$self->{queue} ||= []};
-  return $ua
+  warn "SHIFT QUEUE [$ua]"
+    and return $ua
     if $ua;
   
   return $self->mojo_ua;
@@ -107,7 +109,8 @@ sub _enqueue {
   my $queue = $self->{queue} ||= [];
   #~ warn "queue++ $dbh:", scalar @$queue and
   push @$queue, $ua
-    if $self->max_queque && @$queue < $self->max_queque;
+    and warn "PUSH QUEUE [$ua]"
+    if !$self->max_queque || @$queue < $self->max_queque;
   #~ shift @$queue while @$queue > $self->max_connections;
 }
 
