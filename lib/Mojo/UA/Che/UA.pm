@@ -25,12 +25,11 @@ sub DESTROY {
 }
 
 sub merge_headers {
-  my $self = shift;
+  my ($self, $h) = @_;
   return $self->headers
-    unless (scalar @_ > 1) || defined $_[0];
-  my %h = @_;
-  @h{ keys %{ $self->headers } } = values %{ $self->headers };
-  \%h;
+    unless $h;
+  @$h{ keys %{ $self->headers } } = values %{ $self->headers };
+  return $h;
 }
 
 sub request {
@@ -99,15 +98,16 @@ sub _request {
     
     return $res;
     
-  } if delete $headers->{Async};
+  } unless $cb;#if delete $headers->{Async};
   
   print STDERR "Запрос $meth $url ..."
     if $self->debug;
   
-  $res = $self->ua->$meth($url => $headers ? $self->merge_headers(%$headers) : $self->headers, @_, $cb || $_cb || ());
+  $self->ua->$meth($url => $self->merge_headers($headers), @_, $cb || $_cb || ());
   #~ $delay->wait unless $delay->ioloop->is_running;
   Mojo::IOLoop->start # запустить для внутреннего каллбака/ внешний каллбак внешний цикл
-    if !$cb && $_cb && !Mojo::IOLoop->is_running;
+    unless $cb && Mojo::IOLoop->is_running;
+  
   return $res;
 }
 
