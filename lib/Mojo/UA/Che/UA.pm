@@ -103,10 +103,10 @@ sub _request {
   print STDERR "Запрос $meth $url ..."
     if $self->debug;
   
-  $self->ua->$meth($url => $self->merge_headers($headers), @_, $cb || $_cb || ());
+  $self->ua->$meth($url => $self->merge_headers($headers), @_, $cb || $_cb);
   #~ $delay->wait unless $delay->ioloop->is_running;
   Mojo::IOLoop->start # запустить для внутреннего каллбака/ внешний каллбак внешний цикл
-    unless $cb && Mojo::IOLoop->is_running;
+    unless $cb || Mojo::IOLoop->is_running;
   
   return $res;
 }
