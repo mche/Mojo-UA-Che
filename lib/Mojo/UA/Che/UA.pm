@@ -106,8 +106,8 @@ sub _request {
   
   $res = $self->ua->$meth($url => $headers ? $self->merge_headers(%$headers) : $self->headers, @_, $cb || $_cb || ());
   #~ $delay->wait unless $delay->ioloop->is_running;
-  Mojo::IOLoop->start
-    unless $cb && !$_cb && Mojo::IOLoop->is_running;
+  Mojo::IOLoop->start # запустить для внутреннего каллбака/ внешний каллбак внешний цикл
+    if !$cb && $_cb && !Mojo::IOLoop->is_running;
   return $res;
 }
 
