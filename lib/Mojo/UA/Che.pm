@@ -27,7 +27,7 @@ has max_try => 3; # цикл попыток
 
 has max_queque => 0; # 0 - неограниченное количество агентов в пуле
 
-has ua_class => 'Mojo::UA::UA';
+has ua_class => 'Mojo::UA::Che::UA';
 
 has debug => 0;
 
@@ -56,10 +56,7 @@ sub mojo_ua {
     if $self->ua_name;
   
   if ($self->proxy) { $ua->proxy->http($self->proxy)->https($self->proxy); }
-  elsif ($self->proxy_handler) {
-    $ua->proxy_handler($self->proxy_handler);
-    
-  }
+  elsif ($self->proxy_handler) { $self->change_proxy($ua); }
   
   $ua->proxy->not($self->proxy_not)
     if $self->proxy_not;
@@ -69,6 +66,43 @@ sub mojo_ua {
   $ua;
 }
 
+sub change_proxy {
+  my ($self, $ua, $proxy) = @_;
+  my $handler = $self->proxy_handler
+    or return;
+  
+  $handler->bad_proxy($proxy)
+    if $proxy;
+  
+  $proxy = $handler->use_proxy
+    or return;
+  
+  print STDERR "Поменял прокси [$proxy]\n"
+    if $self->debug;
+  
+  $ua->proxy->http($proxy)->https($proxy);
+  
+  
+}
+
+sub _dequeue {
+  my $self = shift;
+
+  my $ua = shift @{$self->{queue} ||= []};
+  return $ua
+    if $ua;
+  
+  return $self->mojo_ua;
+}
+
+sub _enqueue {
+  my ($self, $ua) = @_;
+  my $queue = $self->{queue} ||= [];
+  #~ warn "queue++ $dbh:", scalar @$queue and
+  push @$queue, $ua
+    if @$queue < $self->max_queque;
+  #~ shift @$queue while @$queue > $self->max_connections;
+}
 
 
 =pod
@@ -102,7 +136,7 @@ Perhaps a little code snippet.
 
     use Mojo::UA::Che;
 
-    my $foo = Mojo::UA::Che->new();
+    my $ua = Mojo::UA::Che->new();
     ...
 
 
