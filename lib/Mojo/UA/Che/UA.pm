@@ -71,44 +71,42 @@ sub request {
 }
 
 sub _request {
-  my ($self, $meth, $url, $headers) = map(shift, 0..3);
-  my $ua = $self->ua;
+  my ($self, $meth, $url,) = map(shift, 1..3);
+  my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
+  my $headers = shift;
   my ($res);
+  my $_cb = sub {
+    my ($ua, $tx) = @_;
+    #~ print STDERR dumper($tx->req)
+    my $res = $tx->res;
+    
+    $self->top->dump($tx->req)
+      if $self->debug && $self->debug eq '2';
+    
+    unless ($tx && $tx->success) {
+      my $err = $tx->error;
+      $res = $err->{code} || $err->{message};
+      utf8::decode($res);
+      #~ print STDERR  "не смог: $res\n"
+        #~ if $self->debug;
+      
+      $self->top->dump($tx->req)
+        and die "Критичная ошибка"
+        if $res =~ /отказано/ && !$self->proxy_handler;
+      
+      return $res;
+      
+    }
+  } if delete $headers->{Async};
   
   print STDERR "Запрос $meth $url ..."
     if $self->debug;
   
-  my $delay = Mojo::IOLoop->delay(
-    sub { 
-      my $delay = shift;
-      $ua->$meth($url => $self->merge_headers(%$headers), @_, $delay->begin);
-    },
-    sub {
-      my ($delay, $tx) = @_;
-      
-      #~ print STDERR dumper($tx->req)
-      $self->dump($tx->req)
-        if $self->debug && $self->debug eq '2';
-      
-      unless ($tx && $tx->success) {
-        my $err = $tx->error;
-        $res = $err->{code} || $err->{message};
-        utf8::decode($res);
-        #~ print STDERR  "не смог: $res\n"
-          #~ if $self->debug;
-        
-        $self->dump($tx->req)
-          and die "Критичная ошибка"
-          if $res =~ /отказано/ && !$self->proxy_handler;
-        
-        return $res;
-      }
-      
-      $res = $tx->res;
-    },
-  );
-  $delay->wait unless $delay->ioloop->is_running;
-  $res;
+  $res = $self->ua->$meth($url => $self->merge_headers(%$headers), @_, $cb || $_cb || ());
+  #~ $delay->wait unless $delay->ioloop->is_running;
+  Mojo::IOLoop->start
+    unless $cb && !$_cb && Mojo::IOLoop->is_running;
+  return $res;
 }
 
 1;
