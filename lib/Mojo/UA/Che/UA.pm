@@ -52,12 +52,12 @@ sub request {
     
     if (ref $res || $res =~ m'404') {
       $self->top->proxy_handler->good_proxy($ua_proxy->https ||  $ua_proxy->http)
-        if $self->proxy_handler;
+        if $self->top->proxy_handler;
       return $res;
     }
     elsif ($res =~ m'429|403') {
       last
-        if  $self->proxy_handler;
+        if  $self->top->proxy_handler;
       die "Бан $res";
     }
     elsif ($res =~ /отказано/) {
