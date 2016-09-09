@@ -47,7 +47,8 @@ sub request {
       and return
       if ! ($ua_proxy->https ||  $ua_proxy->http) && $self->proxy_handler;
     
-    $res = $self->_request(@_);
+    $res = $self->_request(@_)
+      or return;
     
     if (ref $res || $res =~ m'404') {
       $self->top->proxy_handler->good_proxy($ua_proxy->https ||  $ua_proxy->http)
@@ -73,7 +74,7 @@ sub request {
 sub _request {
   my ($self, $meth, $url,) = map(shift, 1..3);
   my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
-  my $headers = shift;
+  my $headers = ref $_[0] eq 'HASH' ? shift : undef;
   my ($res);
   my $_cb = sub {
     my ($ua, $tx) = @_;
@@ -94,15 +95,16 @@ sub _request {
         and die "Критичная ошибка"
         if $res =~ /отказано/ && !$self->proxy_handler;
       
-      return $res;
-      
     }
+    
+    return $res;
+    
   } if delete $headers->{Async};
   
   print STDERR "Запрос $meth $url ..."
     if $self->debug;
   
-  $res = $self->ua->$meth($url => $self->merge_headers(%$headers), @_, $cb || $_cb || ());
+  $res = $self->ua->$meth($url => $headers ? $self->merge_headers(%$headers) : $self->headers, @_, $cb || $_cb || ());
   #~ $delay->wait unless $delay->ioloop->is_running;
   Mojo::IOLoop->start
     unless $cb && !$_cb && Mojo::IOLoop->is_running;
