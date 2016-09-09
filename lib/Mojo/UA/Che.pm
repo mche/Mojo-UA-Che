@@ -69,18 +69,21 @@ sub change_proxy {
   my $handler = $self->proxy_handler
     or return;
   
+  $proxy ||= $ua->proxy->https($proxy) || $ua->proxy->http($proxy);
+  
   $handler->bad_proxy($proxy)
     if $proxy;
   
   $proxy = $handler->use_proxy
     or return;
   
-  print STDERR "Поменял прокси [$proxy]\n"
+  print STDERR "Новый прокси [$proxy]\n"
     if $self->debug;
   
-  $ua->proxy->http($proxy)->https($proxy);
+  $ua->proxy->http($proxy)->https($proxy)
+    if $ua;
   
-  
+  return $proxy;
 }
 
 sub _dequeue {

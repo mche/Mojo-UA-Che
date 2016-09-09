@@ -33,5 +33,41 @@ sub merge_headers {
   \%h;
 }
 
+sub request {
+  my $self = shift;
+  
+  my $ua = $self->ua;
+  my $ua_proxy = $ua->proxy;
+  
+  my $res;
+  for (1..$self->max_try) {
+    
+    $self->top->change_proxy($ua)
+      or warn "Не смог выставить прокси через proxy_handler"
+      and return
+      if ! ($ua_proxy->https ||  $ua_proxy->http) && $self->proxy_handler;
+    
+    $res = $self->_request(@_);
+    
+    if (ref $res || $res =~ m'404') {
+      $self->top->proxy_handler->good_proxy($ua_proxy->https ||  $ua_proxy->http)
+        if $self->proxy_handler;
+      return $res;
+    }
+    elsif ($res =~ m'429|403') {
+      last
+        if  $self->proxy_handler;
+      die "Бан $res";
+    }
+    
+    print STDERR " попытка @{[$_+1 ]} причина[$res]...\n"
+      unless $_ eq $self->max_try;
+  }
+  
+  $self->top->change_proxy($ua)
+    and return $self->request(@_);
+  
+  return $res;
+}
 
 1;
