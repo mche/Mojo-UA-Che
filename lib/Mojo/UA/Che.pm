@@ -66,8 +66,8 @@ sub batch {
   },
   sub {
     my $delay = shift;
-    my (@ua, @tx);
-    push(@{$self->{queue}}, shift @seq)
+    my (@tx);
+    $self->_enqueue(shift @seq)
       and push(@tx, @seq)
       while my @seq = splice @_, 0, 2;
     #~ warn @tx;
