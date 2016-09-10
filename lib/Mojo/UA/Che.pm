@@ -77,7 +77,7 @@ sub batch {
         1;
       } else {
         die "Критичная ошибка $res"
-          if $res =~ m'429|403|отказано|premature'i && ! $self->proxy_handler;
+          if $res =~ m'429|403|отказано|premature|Authentication'i && ! $self->proxy_handler;
         $self->change_proxy($ua);
       }
       push @res, $res;

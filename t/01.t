@@ -77,17 +77,21 @@ sub process_res {
   
 }
 
+my @success = ();
+
 while (@modules) {
-  my @mod = splice @modules, 0, 3;
+  my @mod = splice @modules, 0, 4;
   my @res = $ua->batch(map ['get', $base_url.$_], @mod);
   for my $res (@res) {
     my $mod = shift @mod;
     unshift @modules, $mod
+      and next
       unless  ref $res;
-    warn "$mod: ", process_res($res);
+    push @success, "$mod: ".process_res($res);
   }
 }
 
+warn $_ for @success;
 
 #~ warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 #~ warn @{$ua->{queue} || []};
