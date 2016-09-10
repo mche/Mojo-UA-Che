@@ -23,12 +23,11 @@ has list => sub {[]};
 
 sub proxy_load {# загрузка списка
   my $self = shift;
-  my $res = $self->ua->get($self->proxy_url,);
-  die sprintf("Ошибка запроса [%s] списка проксей: %s", $self->proxy_url, $res)
-    unless ref $res;
-  my $sth_new = $self->model->sth('new proxy');
-  my $sth_get = $self->model->sth('get proxy');
-  $res->dom->find('table.proxy__t tbody tr')->map(sub {
+  my $tx = $self->ua->get($self->proxy_url,);
+  my $err = $tx->error;
+  die sprintf("Ошибка запроса [%s] списка проксей: %s", $self->proxy_url, $err->{code} || $err->{message})
+    if $err;
+  $tx->res->dom->find('table.proxy__t tbody tr')->map(sub {
     my $ip = $_->at('td.tdl');
     my $port = $ip->next_node;
     my $type = lc((split /,/, $_->child_nodes->[-3]->content)[-1]) ;
