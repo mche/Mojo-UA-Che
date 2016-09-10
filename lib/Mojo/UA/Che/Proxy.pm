@@ -11,7 +11,7 @@ has ua => sub {
     #~ connect_timeout=>30,
     %{self->ua_has},
   );
-  $ua->transactor->name();
+  $ua->transactor->name($self->ua_name);
   $ua->proxy->not(['hideme.ru'])
 };
 
@@ -40,7 +40,8 @@ sub proxy_load {# загрузка списка
 sub use_proxy {
   my $self = shift;
   my $proxy = shift @{$self->list}
-    || ($self->proxy_load && shift @{$self->list});
+    || ($self->proxy_load && shift @{$self->list})
+    || die "Не смог получить проксю";
   #~ $self->render(json=>$r);
   #~ $self->check_proxy($r);
   return 'socks://' . $proxy;
