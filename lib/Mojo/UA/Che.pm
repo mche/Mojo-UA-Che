@@ -68,17 +68,13 @@ sub batch {
     my $delay = shift;
     while (my ($ua, $tx) = splice @_, 0, 2) {
       my $res = $self->process_tx($tx);
-      if (ref $res || $res =~ m'404') {
+      if (ref $res || $res =~ m'404') {# success
         $self->proxy_handler->good_proxy($ua->proxy->https ||  $ua->proxy->http)
           if $self->proxy_handler;
-      }
-      elsif ($res =~ m'429|403|отказано' || ) {
+      } else {
         die "Критичная ошибка $res"
-          unless $self->proxy_handler;
-        $self->change_proxy($ua);
-      }
-      else {
-        $self->change_proxy($ua);
+          if $res =~ m'429|403|отказано' && ! $self->proxy_handler;
+          $self->change_proxy($ua);
       }
       push @res, $res;
       $self->_enqueue($ua);
