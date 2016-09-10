@@ -107,7 +107,7 @@ sub process_tx {
   
   if ($tx->error) {
     my $err = $tx->error;
-    $res = $err->{code} || $err->{message} || '?';
+    $res = $err->{code} || $err->{message} || 'unknown error';
     utf8::decode($res);
   }
   
