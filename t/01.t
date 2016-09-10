@@ -5,7 +5,7 @@ use Mojo::UA::Che;
 
 my $ua =  Mojo::UA::Che->new;
 
-my @modules = qw(Mojolicious Mojo::Pg Mojo::Pg::Che DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
+my @modules = qw(Scalar::Util Mojolicious Mojo::Pg Mojo::Pg::Che DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
 my $base_url = 'https://metacpan.org/pod/';
 
 =pod
@@ -71,11 +71,18 @@ sub url {
 }
 
 sub process_res {
-  shift->dom->at('ul.slidepanel > li time[itemprop="dateModified"]')->text;
+  my $res = shift;
+  return $res
+    unless ref $res;
+  $res->dom->at('ul.slidepanel > li time[itemprop="dateModified"]')->text;
   
 }
 
-warn $ua->batch(map [get=>url()], 1..3);
+
+warn process_res($_) for $ua->batch(map([ 'get' => url() ], (1..4)));
+#~ warn @{$ua->{queue} || []};
+warn process_res($_) for $ua->batch(map([ 'get' => url() ], (1..4)));
+#~ warn @{$ua->{queue} || []};
 
 #~ $delay #->data(ua=>[map $ua->ua, (1..3)])
 #~ ->steps(

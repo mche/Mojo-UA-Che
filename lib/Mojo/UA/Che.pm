@@ -3,6 +3,7 @@ package Mojo::UA::Che;
 use Mojo::Base -base;
 use Mojo::UA::Che::UA;
 use Mojo::UserAgent;
+#~ use Scalar::Util qw(unweaken weaken);
 
 
 my @ua_name = (
@@ -18,7 +19,7 @@ my @ua_name = (
   
 );
 
-sub ua_name {$ua_name[rand @ua_name];};
+has qw(ua_name);
 
 has max_redirects => 3;
 
@@ -48,21 +49,24 @@ sub request {
 }
 
 sub batch {
-  my $self = shift;
+  my ($self, @batch) = @_;
   my $delay = Mojo::IOLoop->delay;
   my @res = ();
-  $delay->data(ua =>[map $self->mojo_ua, (1..scalar @_)]);
+  my @ua = map $self->ua, (1..@batch);
+  $delay->data(ua =>[@ua]);# копировать!!!
   $delay->steps(
   sub {
     my ($delay) = @_;
-    for my $ua (@{$delay->data->{ua}}) {
-      my $data = shift;
+    for my $ua (@ua) {
+      my $data = shift @batch;
       my $meth= shift @$data;
-      $ua->$meth(@data, $delay->begin);
+      #~ warn $ua->ua, "->$meth(@$data)";
+      $ua->ua->$meth(@$data, $delay->begin);
     }
   },
   sub {
     my ($delay, @tx) = @_;
+    #~ warn @tx;
     push @res, $self->process_tx($_) for @tx;
   }
   
@@ -95,8 +99,7 @@ sub mojo_ua {
     
   $ua->max_redirects($self->max_redirects);
   # Change name of user agent
-  $ua->transactor->name($self->ua_name)
-    if $self->ua_name;
+  $ua->transactor->name($self->ua_name || $ua_name[rand @ua_name]);
   
   if ($self->proxy) { $ua->proxy->http($self->proxy)->https($self->proxy); }
   elsif ($self->proxy_handler) { $self->change_proxy($ua); }
@@ -136,16 +139,18 @@ sub _dequeue {
 
   my $ua = shift @{$self->{queue} ||= []};
   warn "SHIFT QUEUE [$ua]"
+    #~ and ($self->{waiting}{$ua}=$ua)
     and return $ua
     if $ua;
   
-  return $self->mojo_ua;
+  $ua = $self->mojo_ua;
+  #~ $self->{waiting}{$ua}=$ua;
+  return $ua;
 }
 
 sub _enqueue {
   my ($self, $ua) = @_;
   my $queue = $self->{queue} ||= [];
-  #~ warn "queue++ $dbh:", scalar @$queue and
   push @$queue, $ua
     and warn "PUSH QUEUE [$ua]"
     if !$self->max_queque || @$queue < $self->max_queque;
