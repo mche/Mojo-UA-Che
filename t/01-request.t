@@ -5,7 +5,7 @@ use Mojo::UA::Che;
 
 my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', max_try=>5);
 my $base_url = 'https://metacpan.org/pod/';
-my @modules = qw(0Scalar::Util Mojolicious0 Mojo::Pg0 0Mojo::Pg::Che 0DBI 0DBD::Pg 00DBIx::Mojo::Template 00AnyEvent Ado);
+my @modules = qw(CHI 0DBI 0DBD::Pg 00DBIx::Mojo::Template 00AnyEvent Ado);
 #~ unshift @modules, 'http://foobaaar.com/';
 
 
@@ -35,7 +35,7 @@ start() for 1..4;
 
 
 
-$delay->wait and warn "WAIT!!!!" while @success < 9;
+$delay->wait and warn "WAIT!!!!" while @success < 6;
 
 warn $_ for @success;
 
