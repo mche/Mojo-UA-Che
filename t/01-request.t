@@ -4,8 +4,13 @@ use Test::More;
 use Mojo::UA::Che;
 
 my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', max_try=>5);
-my $base_url = 'https://metacpan.org/pod/';
-my @modules = qw(CHI 0DBI 0DBD::Pg 00DBIx::Mojo::Template 00AnyEvent Ado);
+#~ my $base_url = 'https://metacpan.org/pod/';
+#~ my @modules = qw(CHI 0DBI 0DBD::Pg 00DBIx::Mojo::Template 00AnyEvent Ado);
+#~ my $css = 'ul.slidepanel > li time[itemprop="dateModified"]';
+my $base_url = 'http://mojolicious.org/perldoc/';
+my @modules = qw(Mojolicious::Controller DBI Mojo::Pg Data::Dumper ojo);
+my $css = '#NAME ~ p';
+my $limit=@modules;
 #~ unshift @modules, 'http://foobaaar.com/';
 
 
@@ -31,11 +36,9 @@ Mojo::IOLoop->start;
 
 my $delay = Mojo::IOLoop->delay;
 my @success = ();
-start() for 1..4;
+start() for 1..3;
 
-
-
-$delay->wait and warn "WAIT!!!!" while @success < 6;
+($delay->wait || 1) and warn "WAIT!!!!" while @success < $limit;
 
 warn $_ for @success;
 
@@ -59,7 +62,7 @@ sub start {
     warn "AGAIN: [$module] $res"
       and return start($mua, $module)
       unless  ref $res || $res =~ /404/;
-    push @success, "$module modified: ".process_res($res);
+    push @success, "$module: ".process_res($res);
     #~ warn "$module modified: ", process_res($tx->res), $ua;
     #~ $end->();
     start($mua);
@@ -70,7 +73,7 @@ sub process_res {
   my $res = shift;
   return $res
     unless ref $res;
-  $res->dom->at('ul.slidepanel > li time[itemprop="dateModified"]')->text;
+  $res->dom->at($css)->text;
   
 }
 
