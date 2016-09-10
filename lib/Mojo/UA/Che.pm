@@ -52,7 +52,9 @@ sub batch {
   my ($self, @batch) = @_;
   my $delay = Mojo::IOLoop->delay;
   my @res = ();
-  my @ua = map $self->_dequeue, (1..@batch);
+  my @ua = $self->proxy_handler ? $self->_dequeue(scalar @batch)
+    : (($self->_dequeue) x @batch)
+  ;
   $delay->data(ua =>\@ua);# копировать!!!
   $delay->steps(
   sub {
@@ -66,6 +68,7 @@ sub batch {
   },
   sub {
     my $delay = shift;
+    my @ua;
     while (my ($ua, $tx) = splice @_, 0, 2) {
       my $res = $self->process_tx($tx);
       if (ref $res || $res =~ m'404') {# success
@@ -73,14 +76,26 @@ sub batch {
           if $self->proxy_handler;
       } else {
         die "Критичная ошибка $res"
-          if $res =~ m'429|403|отказано' && ! $self->proxy_handler;
-          $self->change_proxy($ua);
+          if $res =~ m'429|403|отказано';# && ! $self->proxy_handler;
+        $self->change_proxy($ua);
       }
       push @res, $res;
-      $self->_enqueue($ua);
-  }
+      push @ua, $ua;
+    }
+    
+    if ($self->proxy_handler) {
+      $self->_enqueue(@ua);
+    } else {
+      $self->_enqueue($ua[0]);
+    }
+  },
   
   );
+  $delay->catch(sub {
+    my ($delay, $err) = @_;
+    warn $err;
+    $delay->emit(finish => 'failed');
+  });
   $delay->wait;
   return @res;
 }
@@ -145,25 +160,26 @@ sub change_proxy {
 }
 
 sub _dequeue {
-  my $self = shift;
+  my ($self, $count) = @_;
+  $count ||= 1;
 
-  my $ua = shift @{$self->{queue} ||= []};
-  warn "SHIFT QUEUE [$ua]"
-    #~ and ($self->{waiting}{$ua}=$ua)
-    and return $ua
-    if $ua;
+  my @ua = splice @{$self->{queue} ||= []}, 0, $count;
+  warn "SHIFT QUEUE [@ua]"
+    if @ua;
   
-  $ua = $self->mojo_ua;
-  #~ $self->{waiting}{$ua}=$ua;
-  return $ua;
+  push @ua, $self->mojo_ua
+    and warn "NEW UA [@{[ $ua[-1] ]}]"
+    while @ua < $count;
+  
+  return @ua;
 }
 
 sub _enqueue {
-  my ($self, $ua) = @_;
+  my ($self, @ua) = @_;
   my $queue = $self->{queue} ||= [];
-  push @$queue, $ua
-    and warn "PUSH QUEUE [$ua]"
-    if !$self->max_queque || @$queue < $self->max_queque;
+  push @$queue, shift @ua
+    and warn "PUSH QUEUE [@{[ $queue->[-1] ]}]"
+    while (!$self->max_queque || @$queue < $self->max_queque) && @ua;
   #~ shift @$queue while @$queue > $self->max_connections;
 }
 

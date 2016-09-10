@@ -4,9 +4,10 @@ use Test::More;
 use Mojo::UA::Che;
 
 my $ua =  Mojo::UA::Che->new;
-
-my @modules = qw(Scalar::Util Mojolicious Mojo::Pg Mojo::Pg::Che DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
 my $base_url = 'https://metacpan.org/pod/';
+my @modules = map $base_url.$_, qw(Scalar::Util Mojolicious Mojo::Pg Mojo::Pg::Che DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
+unshift @modules, 'http://foobaaar.com/';
+
 
 =pod
 my $cb = sub {
@@ -24,8 +25,6 @@ my $cb = sub {
 
 $ua->request('get', $base_url . shift @modules, $cb) for 1..3;
 Mojo::IOLoop->start;
-
-
 
 
 =cut
@@ -79,11 +78,11 @@ sub process_res {
 }
 
 
-warn process_res($_) for $ua->batch(map([ 'get' => url() ], (1..3)));
+warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 #~ warn @{$ua->{queue} || []};
-warn process_res($_) for $ua->batch(map([ 'get' => url() ], (1..3)));
+warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 #~ warn @{$ua->{queue} || []};
-warn process_res($_) for $ua->batch(map([ 'get' => url() ], (1..3)));
+warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 
 #~ $delay #->data(ua=>[map $ua->ua, (1..3)])
 #~ ->steps(
