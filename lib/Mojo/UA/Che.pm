@@ -121,7 +121,7 @@ sub process_tx {
 }
 
 sub process_res {
-  my ($self, $res,$ua) = @_;
+  my ($self, $res, $ua) = @_;
   return 1
     if ref $res || $res =~ m'404';# success
   #~ if () {
@@ -130,7 +130,7 @@ sub process_res {
         #~ 1;
       #~ } else {
   die "Критичная ошибка $res"
-    if $res =~ m'429|403|отказано|premature|Authentication'i && ($ua->proxy->{_tried} = 1000) && ! $self->proxy_handler;
+    if $res =~ m'429|403|отказано|premature|Authentication'i && (($ua->proxy->{_tried} = $self->max_try) || 1) && ! $self->proxy_handler;
   $self->change_proxy($ua);
 }
 
@@ -164,7 +164,7 @@ sub change_proxy {
 
   warn "NEXT TRY for [$ua]: ", $ua_proxy->{_tried}
     and return $ua_proxy->https || $ua_proxy->http
-      if ($ua_proxy->https || $ua_proxy->http) && ++$ua_proxy->{_tried} < $self->max_try;
+      if ($ua_proxy->https || $ua_proxy->http) && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
   
   $proxy ||= $ua_proxy->https || $ua_proxy->http;
   #~ }
