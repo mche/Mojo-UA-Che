@@ -200,7 +200,7 @@ sub dequeue {
     and warn "NEW UA [@{[ $ua[-1] ]}]"
     while @ua < $count;
   
-  return @ua;
+  return wantarray ? @ua : $ua[0];
 }
 
 sub enqueue {

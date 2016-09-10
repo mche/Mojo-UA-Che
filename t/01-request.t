@@ -5,7 +5,7 @@ use Mojo::UA::Che;
 
 my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', max_try=>5);
 my $base_url = 'https://metacpan.org/pod/';
-my @modules = qw(Scalar::Util Mojolicious Mojo::Pg Mojo::Pg::Che DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
+my @modules = qw(0Scalar::Util Mojolicious0 Mojo::Pg0 0Mojo::Pg::Che 0DBI 0DBD::Pg 00DBIx::Mojo::Template 00AnyEvent Ado);
 #~ unshift @modules, 'http://foobaaar.com/';
 
 
@@ -31,28 +31,38 @@ Mojo::IOLoop->start;
 
 my $delay = Mojo::IOLoop->delay;
 my @success = ();
-start() for 1..3;
+start() for 1..4;
 
-$delay->wait;
+
+
+$delay->wait and warn "WAIT!!!!" while @success < 9;
 
 warn $_ for @success;
 
 sub start {
-  my $module = shift() || shift @modules
-    or return;
+  my $mojo_ua = shift || $ua->dequeue;
+  my $module = shift || shift @modules
+    || return;
   my $url = $base_url.$module;
+  
+  push @{$delay->data->{ua} ||= []}, $mojo_ua;
+  #~ $delay->data($url=>);
   my $end = $delay->begin;
-  my $res = $ua->request('get'=> $url => sub {
+  $mojo_ua->get( $url => sub {
+    #~ $end->();
+    my ($mua, $tx) = @_;
+    my $res = $ua->process_tx($tx, $mua);
+    #~ $ua->enqueue($mua);
+    #~ delete $delay->data->{$url};
+    #~ pop @{$delay->data->{ua}};
     $end->();
-    my ($mojo_ua, $tx) = @_;
-    my $res = $ua->process_tx($tx, $mojo_ua);
-    $ua->enqueue($mojo_ua);
-    return start($module)
-      unless  ref $res;
+    warn "AGAIN: [$module] $res"
+      and return start($mua, $module)
+      unless  ref $res || $res =~ /404/;
     push @success, "$module modified: ".process_res($res);
     #~ warn "$module modified: ", process_res($tx->res), $ua;
     #~ $end->();
-    start();
+    start($mua);
     });
 }
 
