@@ -140,15 +140,15 @@ sub change_proxy {
   my $handler = $self->proxy_handler
     or return;
 
-  if ($ua) {
-    my $ua_proxy = $ua->proxy;
+  #~ if ($ua) {
+  my $ua_proxy = $ua->proxy;
 
-    warn "NEXT TRY for [$ua]: ", $ua_proxy->{_tried}
-      and return $ua_proxy->https || $ua_proxy->http
-        if ($ua_proxy->https || $ua_proxy->http) && ++$ua_proxy->{_tried} < $self->max_try;
-    
-    $proxy ||= $ua_proxy->https || $ua_proxy->http;
-  }
+  warn "NEXT TRY for [$ua]: ", $ua_proxy->{_tried}
+    and return $ua_proxy->https || $ua_proxy->http
+      if ($ua_proxy->https || $ua_proxy->http) && ++$ua_proxy->{_tried} < $self->max_try;
+  
+  $proxy ||= $ua_proxy->https || $ua_proxy->http;
+  #~ }
   
    
   $handler->bad_proxy($proxy)
@@ -160,11 +160,11 @@ sub change_proxy {
   #~ print STDERR "Новый прокси [$proxy]\n"
     #~ if $self->debug;
   
-  $ua->proxy->http($proxy)->https($proxy)
+  $ua_proxy->http($proxy)->https($proxy)
     and warn "SET PROXY [$proxy]"
     if $ua;
   
-  $ua->proxy->{_tried} = 0;
+  $ua_proxy->{_tried} = 0;
   
   return $proxy;
 }
