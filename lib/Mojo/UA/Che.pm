@@ -4,7 +4,7 @@ use Mojo::Base -base;
 #~ use Mojo::UA::Che::UA;
 use Mojo::UserAgent;
 
-my @ua_name = (
+has ua_names => sub {[
 #http://digitorum.ru/blog/2012/12/02/User-Agent-Poiskovye-boty.phtml
   #~ 'Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0',
 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
@@ -15,7 +15,7 @@ my @ua_name = (
 'Mozilla/5.0 (compatible; YandexMedia/3.0; +http://yandex.com/bots)',
 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)',
   
-);
+]};
 
 has qw(ua_name);
 
@@ -122,7 +122,8 @@ sub mojo_ua {
   $ua->cookie_jar->ignore(sub { 1 })
     if $self->cookie_ignore;
   # Change name of user agent
-  $ua->transactor->name($self->ua_name || $ua_name[rand @ua_name]);
+  my $ua_names = $self->ua_names;
+  $ua->transactor->name($self->ua_name || $ua_names->[rand @$ua_names]);
   
   if ($self->proxy) { $ua->proxy->http($self->proxy)->https($self->proxy); }
   elsif ($self->proxy_handler) { $self->change_proxy($ua); }
