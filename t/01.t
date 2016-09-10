@@ -78,9 +78,9 @@ sub process_res {
 }
 
 
-warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..1)));
+warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 #~ warn @{$ua->{queue} || []};
-#~ warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
+warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 #~ warn @{$ua->{queue} || []};
 #~ warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 

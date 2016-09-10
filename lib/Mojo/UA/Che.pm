@@ -137,26 +137,31 @@ sub mojo_ua {
 
 sub change_proxy {
   my ($self, $ua, $proxy) = @_;
-  
-  return $ua->proxy->https($proxy) || $ua->proxy->http($proxy)
-    if $ua && ++$ua->proxy->{_tried} < $self->max_try;
-  
   my $handler = $self->proxy_handler
     or return;
+
+  if ($ua) {
+    my $ua_proxy = $ua->proxy;
+
+    warn "NEXT TRY ", $ua_proxy->{_tried}
+      and return $ua_proxy->https($proxy) || $ua_proxy->http($proxy)
+        if ($ua_proxy->https($proxy) || $ua_proxy->http($proxy)) && ++$ua_proxy->{_tried} < $self->max_try;
+    
+    $proxy ||= $ua_proxy->https($proxy) || $ua_proxy->http($proxy);
+  }
   
-  $proxy ||= $ua->proxy->https($proxy) || $ua->proxy->http($proxy)
-    if $ua;
-  
+   
   $handler->bad_proxy($proxy)
     if $proxy;
   
   $proxy = $handler->use_proxy
     or return;
   
-  print STDERR "Новый прокси [$proxy]\n"
-    if $self->debug;
+  #~ print STDERR "Новый прокси [$proxy]\n"
+    #~ if $self->debug;
   
   $ua->proxy->http($proxy)->https($proxy)
+    and warn "SET PROXY [$proxy]"
     if $ua;
   
   return $proxy;
@@ -189,7 +194,7 @@ sub _enqueue {
 sub dump {shift; say STDERR dumper(@_);}
 
 sub load_class {
-  my $class;
+  my $class = shift;
   require Mojo::Loader;
   my $e; $e = Mojo::Loader::load_class($class)# success undef
     and ($e eq 1 or warn("None load_class[$class]: ", $e))
