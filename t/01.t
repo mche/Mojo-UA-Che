@@ -33,9 +33,9 @@ done_testing();
 my $delay = Mojo::IOLoop->delay;
 my $async = 1;
 
-start() for 1..3;
+#~ start() for 1..3;
 
-$delay->wait;
+#~ $delay->wait;
 
 sub start {
   my $module = shift @modules
@@ -63,7 +63,28 @@ sub start {
   
 }
 
+sub start2 {
+  my $module = shift @modules
+    or return;
+  my $url = "$base_url$module";
+  shift->request('get'=> $url => shift);
+}
+
 sub process_res {
   shift->dom->at('ul.slidepanel > li time[itemprop="dateModified"]')->text;
   
 }
+
+$delay->steps(
+sub {
+  my ($delay) = @_;
+  push my @ua, $ua->ua for 1..3;
+  start2($_, $delay->begin) for @ua;
+},
+sub {
+  my ($delay, @tx) = @_;
+  say "@tx";
+},
+
+
+);
