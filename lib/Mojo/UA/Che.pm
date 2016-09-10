@@ -107,7 +107,7 @@ sub process_tx {
   
   if ($tx->error) {
     my $err = $tx->error;
-    $res = $err->{code} || $err->{message};
+    $res = $err->{code} || $err->{message} || '?';
     utf8::decode($res);
   }
   
@@ -143,11 +143,11 @@ sub change_proxy {
   if ($ua) {
     my $ua_proxy = $ua->proxy;
 
-    warn "NEXT TRY ", $ua_proxy->{_tried}
-      and return $ua_proxy->https($proxy) || $ua_proxy->http($proxy)
-        if ($ua_proxy->https($proxy) || $ua_proxy->http($proxy)) && ++$ua_proxy->{_tried} < $self->max_try;
+    warn "NEXT TRY for [$ua]: ", $ua_proxy->{_tried}
+      and return $ua_proxy->https || $ua_proxy->http
+        if ($ua_proxy->https || $ua_proxy->http) && ++$ua_proxy->{_tried} < $self->max_try;
     
-    $proxy ||= $ua_proxy->https($proxy) || $ua_proxy->http($proxy);
+    $proxy ||= $ua_proxy->https || $ua_proxy->http;
   }
   
    

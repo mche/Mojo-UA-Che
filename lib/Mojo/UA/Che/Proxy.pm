@@ -9,10 +9,11 @@ has ua => sub {
   my $ua = Mojo::UserAgent->new( 
     #~ max_redirects=>0,
     #~ connect_timeout=>30,
-    %{self->ua_has},
+    %{$self->ua_has},
   );
   $ua->transactor->name($self->ua_name);
-  $ua->proxy->not(['hideme.ru'])
+  $ua->proxy->not(['hideme.ru']);
+  return $ua;
 };
 
 has proxy_url => 'http://hideme.ru/proxy-list/?type=45#list';

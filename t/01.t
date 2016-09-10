@@ -3,9 +3,9 @@ use Mojo::Base -strict;
 use Test::More;
 use Mojo::UA::Che;
 
-my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy');
+my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', max_try=>5);
 my $base_url = 'https://metacpan.org/pod/';
-my @modules = map $base_url.$_, qw(Scalar::Util Mojolicious Mojo::Pg Mojo::Pg::Che DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
+my @modules = qw(Scalar::Util Mojolicious Mojo::Pg Mojo::Pg::Che DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
 #~ unshift @modules, 'http://foobaaar.com/';
 
 
@@ -77,10 +77,21 @@ sub process_res {
   
 }
 
+while (@modules) {
+  my @mod = splice @modules, 0, 3;
+  my @res = $ua->batch(map ['get', $base_url.$_], @mod);
+  for my $res (@res) {
+    my $mod = shift @mod;
+    unshift @modules, $mod
+      unless  ref $res;
+    warn "$mod: ", process_res($res);
+  }
+}
 
-warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
+
+#~ warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 #~ warn @{$ua->{queue} || []};
-warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
+#~ warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 #~ warn @{$ua->{queue} || []};
 #~ warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 
