@@ -49,7 +49,7 @@ sub request {
   my $meth = shift;
   return $ua->$meth(@_)
     if $async;
-  
+  # Blocking
   my $tx = $ua->$meth(@_);
   my $res = $self->process_tx($tx);
   $self->process_res($res, $ua);
