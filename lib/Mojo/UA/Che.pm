@@ -66,12 +66,22 @@ sub batch {
   },
   sub {
     my $delay = shift;
-    my (@tx);
-    $self->_enqueue(shift @seq)
-      and push(@tx, @seq)
-      while my @seq = splice @_, 0, 2;
-    #~ warn @tx;
-    push @res, $self->process_tx($_) for @tx;
+    while (my ($ua, $tx) = splice @_, 0, 2) {
+      my $res = $self->process_tx($tx);
+      if (ref $res || $res =~ m'404') {
+        $self->proxy_handler->good_proxy($ua->proxy->https ||  $ua->proxy->http)
+          if $self->proxy_handler;
+      }
+      elsif ($res =~ m'429|403|отказано' || ) {
+        die "Критичная ошибка $res"
+          unless $self->proxy_handler;
+        $self->change_proxy($ua);
+      }
+      else {
+        $self->change_proxy($ua);
+      }
+      push @res, $res;
+      $self->_enqueue($ua);
   }
   
   );

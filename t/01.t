@@ -79,10 +79,11 @@ sub process_res {
 }
 
 
-warn process_res($_) for $ua->batch(map([ 'get' => url() ], (1..4)));
+warn process_res($_) for $ua->batch(map([ 'get' => url() ], (1..3)));
 #~ warn @{$ua->{queue} || []};
-warn process_res($_) for $ua->batch(map([ 'get' => url() ], (1..4)));
+warn process_res($_) for $ua->batch(map([ 'get' => url() ], (1..3)));
 #~ warn @{$ua->{queue} || []};
+warn process_res($_) for $ua->batch(map([ 'get' => url() ], (1..3)));
 
 #~ $delay #->data(ua=>[map $ua->ua, (1..3)])
 #~ ->steps(
