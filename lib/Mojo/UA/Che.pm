@@ -71,15 +71,7 @@ sub batch {
     my @ua;
     while (my ($ua, $tx) = splice @_, 0, 2) {
       my $res = $self->process_tx($tx);
-      if (ref $res || $res =~ m'404') {# success
-        #~ $self->proxy_handler->good_proxy($ua->proxy->https ||  $ua->proxy->http)
-          #~ if $self->proxy_handler;
-        1;
-      } else {
-        die "Критичная ошибка $res"
-          if $res =~ m'429|403|отказано|premature|Authentication'i && ($ua->proxy->{_tried} = 1000) && ! $self->proxy_handler;
-        $self->change_proxy($ua);
-      }
+      $self->process_res($res, $ua);
       push @res, $res;
       push @ua, $ua;
     }
@@ -113,6 +105,20 @@ sub process_tx {
   
   return $res;
   
+}
+
+sub process_res {
+  my ($self, $res,$ua) = @_;
+  return 1
+    if ref $res || $res =~ m'404';# success
+  #~ if () {
+        #~ $self->proxy_handler->good_proxy($ua->proxy->https ||  $ua->proxy->http)
+          #~ if $self->proxy_handler;
+        #~ 1;
+      #~ } else {
+  die "Критичная ошибка $res"
+    if $res =~ m'429|403|отказано|premature|Authentication'i && ($ua->proxy->{_tried} = 1000) && ! $self->proxy_handler;
+  $self->change_proxy($ua);
 }
 
 
