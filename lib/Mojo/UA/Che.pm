@@ -77,7 +77,7 @@ sub batch {
         1;
       } else {
         die "Критичная ошибка $res"
-          if $res =~ m'429|403|отказано|premature|Authentication'i && ! $self->proxy_handler;
+          if $res =~ m'429|403|отказано|premature|Authentication'i && ($ua->proxy->{_tried} = 1000) && ! $self->proxy_handler;
         $self->change_proxy($ua);
       }
       push @res, $res;
@@ -163,6 +163,8 @@ sub change_proxy {
   $ua->proxy->http($proxy)->https($proxy)
     and warn "SET PROXY [$proxy]"
     if $ua;
+  
+  $ua->proxy->{_tried} = 0;
   
   return $proxy;
 }
