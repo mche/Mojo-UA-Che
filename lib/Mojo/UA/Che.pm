@@ -51,8 +51,8 @@ sub request {
     if $async;
   # Blocking
   my $tx = $ua->$meth(@_);
-  my $res = $self->process_tx($tx);
-  $self->process_res($res, $ua);
+  my $res = $self->process_tx($tx, $ua);
+  #~ $self->process_res($res, $ua);
   $self->enqueue($ua);
   return $res;
   #~ $self->ua->request(@_);
@@ -81,8 +81,8 @@ sub batch {
     my $delay = shift;
     my @ua;
     while (my ($ua, $tx) = splice @_, 0, 2) {
-      my $res = $self->process_tx($tx);
-      $self->process_res($res, $ua);
+      my $res = $self->process_tx($tx, $ua);
+      #~ $self->process_res($res, $ua);
       push @res, $res;
       push @ua, $ua;
     }
@@ -105,7 +105,7 @@ sub batch {
 }
 
 sub process_tx {
-  my ($self, $tx) = @_;
+  my ($self, $tx, $ua) = @_;
   my $res = $tx->res;
   
   if ($tx->error) {
@@ -113,6 +113,8 @@ sub process_tx {
     $res = $err->{code} || $err->{message} || 'unknown error';
     utf8::decode($res);
   }
+  
+  $self->process_res($res, $ua);
   
   return $res;
   
