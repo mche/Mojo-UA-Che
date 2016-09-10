@@ -52,8 +52,8 @@ sub batch {
   my ($self, @batch) = @_;
   my $delay = Mojo::IOLoop->delay;
   my @res = ();
-  my @ua = map $self->ua, (1..@batch);
-  $delay->data(ua =>[@ua]);# копировать!!!
+  my @ua = map $self->_dequeue, (1..@batch);
+  $delay->data(ua =>\@ua);# копировать!!!
   $delay->steps(
   sub {
     my ($delay) = @_;
@@ -61,11 +61,15 @@ sub batch {
       my $data = shift @batch;
       my $meth= shift @$data;
       #~ warn $ua->ua, "->$meth(@$data)";
-      $ua->ua->$meth(@$data, $delay->begin);
+      $ua->$meth(@$data, $delay->begin(0));
     }
   },
   sub {
-    my ($delay, @tx) = @_;
+    my $delay = shift;
+    my (@ua, @tx);
+    push(@{$self->{queue}}, shift @seq)
+      and push(@tx, @seq)
+      while my @seq = splice @_, 0, 2;
     #~ warn @tx;
     push @res, $self->process_tx($_) for @tx;
   }
