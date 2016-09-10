@@ -38,22 +38,33 @@ has proxy_not => sub {[]};
 #~ sub ua {
   #~ my $self = shift;
   
-  #~ return $self->ua_class->new(ua => $self->_dequeue, top => $self, max_try => $self->max_try);
+  #~ return $self->ua_class->new(ua => $self->dequeue, top => $self, max_try => $self->max_try);
   
 #~ }
 
-#~ sub request {
-  #~ my $self = shift;
+sub request {
+  my $self = shift;
+  my $async = ref $_[-1] eq 'CODE';
+  my $ua = $self->dequeue;
+  my $meth = shift;
+  return $ua->$meth(@_)
+    if $async;
+  
+  my $tx = $ua->$meth(@_);
+  my $res = $self->process_tx($tx);
+  $self->process_res($res, $ua);
+  $self->enqueue($ua);
+  return $res;
   #~ $self->ua->request(@_);
   
-#~ }
+}
 
 sub batch {
   my ($self, @batch) = @_; # список arrayrefs   ['get', @args], ['post', @args], ...
   my $delay = Mojo::IOLoop->delay;
   my @res = ();
-  my @ua = $self->proxy_handler ? $self->_dequeue(scalar @batch)
-    : (($self->_dequeue) x @batch)
+  my @ua = $self->proxy_handler ? $self->dequeue(scalar @batch)
+    : (($self->dequeue) x @batch)
   ;
   $delay->data(ua =>\@ua);# копировать!!!
   $delay->steps(
@@ -77,16 +88,16 @@ sub batch {
     }
     
     if ($self->proxy_handler) {
-      $self->_enqueue(@ua);
+      $self->enqueue(@ua);
     } else {
-      $self->_enqueue($ua[0]);
+      $self->enqueue($ua[0]);
     }
   },
   
   );
   $delay->catch(sub {
     my ($delay, $err) = @_;
-    warn $err;
+    warn "CATCH: ", $err;
     $delay->emit(finish => 'failed');
   });
   $delay->wait;
@@ -175,7 +186,7 @@ sub change_proxy {
   return $proxy;
 }
 
-sub _dequeue {
+sub dequeue {
   my ($self, $count) = @_;
   $count ||= 1;
 
@@ -190,7 +201,7 @@ sub _dequeue {
   return @ua;
 }
 
-sub _enqueue {
+sub enqueue {
   my ($self, @ua) = @_;
   my $queue = $self->{queue} ||= [];
   push @$queue, shift @ua
