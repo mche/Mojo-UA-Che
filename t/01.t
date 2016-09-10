@@ -3,10 +3,10 @@ use Mojo::Base -strict;
 use Test::More;
 use Mojo::UA::Che;
 
-my $ua =  Mojo::UA::Che->new;
+my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy');
 my $base_url = 'https://metacpan.org/pod/';
 my @modules = map $base_url.$_, qw(Scalar::Util Mojolicious Mojo::Pg Mojo::Pg::Che DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
-unshift @modules, 'http://foobaaar.com/';
+#~ unshift @modules, 'http://foobaaar.com/';
 
 
 =pod
@@ -78,11 +78,11 @@ sub process_res {
 }
 
 
-warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
+warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..1)));
 #~ warn @{$ua->{queue} || []};
-warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
+#~ warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 #~ warn @{$ua->{queue} || []};
-warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
+#~ warn process_res($_) for $ua->batch(map([ 'get' => shift @modules ], (1..3)));
 
 #~ $delay #->data(ua=>[map $ua->ua, (1..3)])
 #~ ->steps(

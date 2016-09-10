@@ -4,6 +4,7 @@ use Mojo::Base -base;
 #~ use Mojo::UA::Che::UA;
 use Mojo::UserAgent;
 
+
 has ua_names => sub {[
 #http://digitorum.ru/blog/2012/12/02/User-Agent-Poiskovye-boty.phtml
   #~ 'Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0',
@@ -30,7 +31,7 @@ has max_queque => 0; # 0 - неограниченное количество а�
 has [qw'debug proxy_module proxy cookie_ignore'];
 
 has proxy_module_has => sub { {} };# опции для new proxy_module
-has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; $self->proxy_module->new(%{$self->proxy_module_has})};
+has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; load_class($self->proxy_module)->new(%{$self->proxy_module_has})};
 
 has proxy_not => sub {[]};
 
@@ -187,6 +188,14 @@ sub _enqueue {
 
 sub dump {shift; say STDERR dumper(@_);}
 
+sub load_class {
+  my $class;
+  require Mojo::Loader;
+  my $e; $e = Mojo::Loader::load_class($class)# success undef
+    and ($e eq 1 or warn("None load_class[$class]: ", $e))
+    and return undef;
+  return $class;
+}
 =pod
 
 =encoding utf-8
