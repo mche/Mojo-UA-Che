@@ -3,8 +3,6 @@ package Mojo::UA::Che;
 use Mojo::Base -base;
 #~ use Mojo::UA::Che::UA;
 use Mojo::UserAgent;
-#~ use Scalar::Util qw(unweaken weaken);
-
 
 my @ua_name = (
 #http://digitorum.ru/blog/2012/12/02/User-Agent-Poiskovye-boty.phtml
@@ -21,17 +19,18 @@ my @ua_name = (
 
 has qw(ua_name);
 
-has max_redirects => 3;
+has mojo_ua_has => sub { {} }; # опции для Mojo::UA->new
 
-has max_try => 3; # цикл попыток
+has max_try => 3; # цикл попыток (для смены прокси)
 
 has max_queque => 0; # 0 - неограниченное количество агентов в пуле
 
 #~ has ua_class => 'Mojo::UA::Che::UA';
 
-has [qw'debug proxy_module proxy connect_timeout cookie_ignore'];
+has [qw'debug proxy_module proxy cookie_ignore'];
 
-has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; $self->proxy_module->new};
+has proxy_module_has => sub { {} };# опции для new proxy_module
+has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; $self->proxy_module->new(%{$self->proxy_module_has})};
 
 has proxy_not => sub {[]};
 
@@ -118,12 +117,10 @@ sub process_tx {
 
 sub mojo_ua {
   my $self = shift;
-  my $ua = Mojo::UserAgent->new;
+  my $ua = Mojo::UserAgent->new(%{$self->mojo_ua_has});
   # Ignore all cookies
   $ua->cookie_jar->ignore(sub { 1 })
     if $self->cookie_ignore;
-    
-  $ua->max_redirects($self->max_redirects);
   # Change name of user agent
   $ua->transactor->name($self->ua_name || $ua_name[rand @ua_name]);
   
@@ -133,9 +130,7 @@ sub mojo_ua {
   $ua->proxy->not($self->proxy_not)
     if $self->proxy_not;
   
-  $ua->connect_timeout($self->connect_timeout)
-    if $self->connect_timeout;
-  $ua;
+  return $ua;
 }
 
 sub change_proxy {
