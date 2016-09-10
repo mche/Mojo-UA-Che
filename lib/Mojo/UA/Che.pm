@@ -1,7 +1,7 @@
 package Mojo::UA::Che;
 
 use Mojo::Base -base;
-use Mojo::UA::Che::UA;
+#~ use Mojo::UA::Che::UA;
 use Mojo::UserAgent;
 #~ use Scalar::Util qw(unweaken weaken);
 
@@ -27,7 +27,7 @@ has max_try => 3; # цикл попыток
 
 has max_queque => 0; # 0 - неограниченное количество агентов в пуле
 
-has ua_class => 'Mojo::UA::Che::UA';
+#~ has ua_class => 'Mojo::UA::Che::UA';
 
 has [qw'debug proxy_module proxy connect_timeout cookie_ignore'];
 
@@ -35,21 +35,21 @@ has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; $
 
 has proxy_not => sub {[]};
 
-sub ua {
-  my $self = shift;
+#~ sub ua {
+  #~ my $self = shift;
   
-  return $self->ua_class->new(ua => $self->_dequeue, top => $self, max_try => $self->max_try);
+  #~ return $self->ua_class->new(ua => $self->_dequeue, top => $self, max_try => $self->max_try);
   
-}
+#~ }
 
-sub request {
-  my $self = shift;
-  $self->ua->request(@_);
+#~ sub request {
+  #~ my $self = shift;
+  #~ $self->ua->request(@_);
   
-}
+#~ }
 
 sub batch {
-  my ($self, @batch) = @_;
+  my ($self, @batch) = @_; # список arrayrefs   ['get', @args], ['post', @args], ...
   my $delay = Mojo::IOLoop->delay;
   my @res = ();
   my @ua = $self->proxy_handler ? $self->_dequeue(scalar @batch)
@@ -72,11 +72,12 @@ sub batch {
     while (my ($ua, $tx) = splice @_, 0, 2) {
       my $res = $self->process_tx($tx);
       if (ref $res || $res =~ m'404') {# success
-        $self->proxy_handler->good_proxy($ua->proxy->https ||  $ua->proxy->http)
-          if $self->proxy_handler;
+        #~ $self->proxy_handler->good_proxy($ua->proxy->https ||  $ua->proxy->http)
+          #~ if $self->proxy_handler;
+        1;
       } else {
         die "Критичная ошибка $res"
-          if $res =~ m'429|403|отказано';# && ! $self->proxy_handler;
+          if $res =~ m'429|403|отказано|premature'i && ! $self->proxy_handler;
         $self->change_proxy($ua);
       }
       push @res, $res;
@@ -139,10 +140,15 @@ sub mojo_ua {
 
 sub change_proxy {
   my ($self, $ua, $proxy) = @_;
+  
+  return $ua->proxy->https($proxy) || $ua->proxy->http($proxy)
+    if $ua && ++$ua->proxy->{_tried} < $self->max_try;
+  
   my $handler = $self->proxy_handler
     or return;
   
-  $proxy ||= $ua->proxy->https($proxy) || $ua->proxy->http($proxy);
+  $proxy ||= $ua->proxy->https($proxy) || $ua->proxy->http($proxy)
+    if $ua;
   
   $handler->bad_proxy($proxy)
     if $proxy;
