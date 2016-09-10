@@ -25,7 +25,7 @@ my $cb = sub {
 $ua->request('get', $base_url . shift @modules, $cb) for 1..3;
 Mojo::IOLoop->start;
 
-done_testing();
+
 
 
 =cut
@@ -63,11 +63,11 @@ sub start {
   
 }
 
-sub start2 {
+sub url {
   my $module = shift @modules
     or return;
   my $url = "$base_url$module";
-  shift->request('get'=> $url => shift);
+  #~ shift->_request('get'=>$url => shift);
 }
 
 sub process_res {
@@ -75,16 +75,23 @@ sub process_res {
   
 }
 
-$delay->steps(
-sub {
-  my ($delay) = @_;
-  push my @ua, $ua->ua for 1..3;
-  start2($_, $delay->begin) for @ua;
-},
-sub {
-  my ($delay, @tx) = @_;
-  say "@tx";
-},
+warn $ua->batch(map [get=>url()], 1..3);
+
+#~ $delay #->data(ua=>[map $ua->ua, (1..3)])
+#~ ->steps(
+#~ sub {
+  #~ my ($delay) = @_;
+  #~ push my @ua, $ua->ua for 1..3;
+  #~ start2($_, $delay->begin) for @ua;#{$delay->data->{ua}};
+#~ },
+#~ sub {
+  #~ my ($delay, @tx) = @_;
+  #~ warn "@tx";
+#~ },
 
 
-);
+#~ );
+#~ $delay->wait;
+
+
+done_testing();

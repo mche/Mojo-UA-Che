@@ -47,6 +47,44 @@ sub request {
   
 }
 
+sub batch {
+  my $self = shift;
+  my $delay = Mojo::IOLoop->delay;
+  my @res = ();
+  $delay->data(ua =>[map $self->mojo_ua, (1..scalar @_)]);
+  $delay->steps(
+  sub {
+    my ($delay) = @_;
+    for my $ua (@{$delay->data->{ua}}) {
+      my $data = shift;
+      my $meth= shift @$data;
+      $ua->$meth(@data, $delay->begin);
+    }
+  },
+  sub {
+    my ($delay, @tx) = @_;
+    push @res, $self->process_tx($_) for @tx;
+  }
+  
+  );
+  $delay->wait;
+  return @res;
+}
+
+sub process_tx {
+  my ($self, $tx) = @_;
+  my $res = $tx->res;
+  
+  if ($tx->error) {
+    my $err = $tx->error;
+    $res = $err->{code} || $err->{message};
+    utf8::decode($res);
+  }
+  
+  return $res;
+  
+}
+
 
 sub mojo_ua {
   my $self = shift;
