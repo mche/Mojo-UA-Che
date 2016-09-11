@@ -222,6 +222,13 @@ sub load_class {
     and return undef;
   return $class;
 }
+
+sub Mojo::UserAgent::DESTROY {
+  my $self = shift;
+  warn "DESTROY: $self";
+  $self->SUPER::DESTROY(@_);
+  
+}
 =pod
 
 =encoding utf-8

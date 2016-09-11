@@ -10,7 +10,8 @@ my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', max_try=>5);
 my $base_url = 'http://mojolicious.org/perldoc/';
 my @modules = qw(Mojolicious::Controller DBI Mojo::Pg Data::Dumper ojo);
 my $css = '#NAME ~ p';
-my $limit=@modules;
+my $limit = 3;
+my $total = @modules;
 #~ unshift @modules, 'http://foobaaar.com/';
 
 
@@ -35,36 +36,30 @@ Mojo::IOLoop->start;
 =cut
 
 my $delay = Mojo::IOLoop->delay;
+my@ua; push @ua, $ua->dequeue for 1..$limit;
+#~ push @{$delay->data->{ua} ||= []}, 
 my @success = ();
-start() for 1..3;
+start($_) for @ua;
 
-($delay->wait || 1) and warn "WAIT!!!!" while @success < $limit;
+($delay->wait || 1) and warn "WAIT!!!!" while @success < $total;
 
 warn $_ for @success;
 
 sub start {
-  my $mojo_ua = shift || $ua->dequeue;
+  my $mojo_ua = shift;
   my $module = shift || shift @modules
     || return;
   my $url = $base_url.$module;
-  
-  push @{$delay->data->{ua} ||= []}, $mojo_ua;
-  #~ $delay->data($url=>);
   my $end = $delay->begin;
   $mojo_ua->get( $url => sub {
     #~ $end->();
     my ($mua, $tx) = @_;
     my $res = $ua->process_tx($tx, $mua);
-    #~ $ua->enqueue($mua);
-    #~ delete $delay->data->{$url};
-    #~ pop @{$delay->data->{ua}};
     $end->();
     warn "AGAIN: [$module] $res"
       and return start($mua, $module)
       unless  ref $res || $res =~ /404/;
     push @success, "$module: ".process_res($res);
-    #~ warn "$module modified: ", process_res($tx->res), $ua;
-    #~ $end->();
     start($mua);
     });
 }
