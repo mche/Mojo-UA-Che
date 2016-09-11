@@ -151,6 +151,8 @@ sub mojo_ua {
   $ua->proxy->not($self->proxy_not)
     if $self->proxy_not;
   
+  $ua->{_ua_che} = $self;
+  
   return $ua;
 }
 
@@ -226,6 +228,8 @@ sub load_class {
 sub Mojo::UserAgent::DESTROY {
   my $self = shift;
   warn "DESTROY: $self";
+  my $che = $self->{_ua_che};
+  $che->enqueue($self);
   $self->SUPER::DESTROY(@_);
   
 }
