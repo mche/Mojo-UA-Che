@@ -36,19 +36,19 @@ Mojo::IOLoop->start;
 =cut
 
 my $delay = Mojo::IOLoop->delay;
-$delay->on(finish => $delay->begin);
-my @ua; push @ua, $ua->dequeue for 1..$limit;
+$delay->on(finish => sub {warn "  FINISH!!!"; $delay->begin});
+#~ my @ua; push @ua, $ua->dequeue for 1..$limit;
 #~ push @{$delay->data->{ua} ||= []}, 
-my @success = ();
-#~ my @end = ();
-start($_) for @ua;
+my @done = ();
+start($_) for 1..$limit; # @ua;
 
-($delay->wait || 1) and warn "WAIT!!!!" while @success < $total;
+$delay->wait;
+#~ ($delay->wait || 1) and warn "WAIT!!!!" while @done < $total;
 
-warn $_ for @success;
+warn $_ for @done;
 
 sub start {
-  my $mojo_ua = shift;
+  my $mojo_ua = shift || $ua->dequeue;
   my $module = shift || shift @modules
   #~ $delay->begin
     #~ and return
@@ -63,7 +63,7 @@ sub start {
     warn "AGAIN: [$module] $res"
       and return start($mua, $module)
       unless  ref $res || $res =~ /404/;
-    push @success, "$module: ".process_res($res);
+    push @done, "$module: ".process_res($res);
     start($mua);
     });
 }
@@ -76,8 +76,5 @@ sub process_res {
   
 }
 
-
-
-
-
 done_testing();
+
