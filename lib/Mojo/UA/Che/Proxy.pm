@@ -76,22 +76,24 @@ sub change_proxy {
     and return $ua_proxy->https || $ua_proxy->http
       if ($ua_proxy->https || $ua_proxy->http) && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
   
+  
+  
   $proxy ||= $ua_proxy->https || $ua_proxy->http;
   #~ }
-  
-   
   $self->bad_proxy($proxy)
     if $proxy;
   
-  $proxy = $self->good_proxy || $self->use_proxy
-    or return;
+  unless ($proxy = $self->good_proxy || $self->use_proxy) {
+    $ua_proxy->http(undef)->https(undef);
+    $ua_proxy->{_tried} = 0;
+    return undef;
+  }
   
   #~ print STDERR "Новый прокси [$proxy]\n"
     #~ if $self->debug;
   
   $ua_proxy->http($proxy)->https($proxy)
-    and warn "SET PROXY [$proxy]"
-    if $ua;
+    and warn "SET PROXY [$proxy]";
   
   $ua_proxy->{_tried} = 0;
   
