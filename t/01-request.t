@@ -36,20 +36,20 @@ Mojo::IOLoop->start;
 =cut
 
 my $delay = Mojo::IOLoop->delay;
-$delay->on(finish => sub {warn "  FINISH!!!"; $delay->begin});
-#~ my @ua; push @ua, $ua->dequeue for 1..$limit;
+$delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
+my @ua; push @ua, $ua->dequeue for 1..$limit;
 #~ push @{$delay->data->{ua} ||= []}, 
 my @done = ();
-start($_) for 1..$limit; # @ua;
+start($_) for @ua;
 
 $delay->wait;
 #~ ($delay->wait || 1) and warn "WAIT!!!!" while @done < $total;
 
-warn $_ for @done;
+warn 'DONE ', $_ for @done;
 
 sub start {
-  my $mojo_ua = shift || $ua->dequeue;
-  my $module = shift || shift @modules
+  my $mojo_ua = shift();# || $ua->dequeue;
+  my $module = shift() || shift @modules
   #~ $delay->begin
     #~ and return
     || return;

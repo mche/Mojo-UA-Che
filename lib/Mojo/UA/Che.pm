@@ -22,15 +22,13 @@ has qw(ua_name);
 
 has mojo_ua_has => sub { {} }; # опции для Mojo::UA->new
 
-has max_try => 3; # цикл попыток (для смены прокси)
-
 has max_queque => 0; # 0 - неограниченное количество агентов в пуле
 
 #~ has ua_class => 'Mojo::UA::Che::UA';
 
 has [qw'debug proxy_module proxy cookie_ignore'];
 
-has proxy_module_has => sub { {} };# опции для new proxy_module
+has proxy_module_has => sub { {max_try => 3} };# опции для new proxy_module
 has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; load_class($self->proxy_module)->new(%{$self->proxy_module_has})};
 
 has proxy_not => sub {[]};
@@ -122,7 +120,7 @@ sub process_tx {
 
 sub process_res {
   my ($self, $res, $ua) = @_;
-  return 1
+  return $self->good_proxy($ua->proxy->https ||  $ua->proxy->http)
     if ref $res || $res =~ m'404';# success
   #~ if () {
         #~ $self->proxy_handler->good_proxy($ua->proxy->https ||  $ua->proxy->http)
@@ -130,7 +128,7 @@ sub process_res {
         #~ 1;
       #~ } else {
   die "Критичная ошибка $res"
-    if $res =~ m'429|403|отказано|premature|Authentication'i && (($ua->proxy->{_tried} = $self->max_try) || 1) && ! $self->proxy_handler;
+    if $res =~ m'429|403|отказано|premature|Authentication'i && ! $self->proxy_handler || (($ua->proxy->{_tried} = $self->proxy_handler->max_try) || 1) ;
   $self->change_proxy($ua);
 }
 
@@ -146,7 +144,7 @@ sub mojo_ua {
   $ua->transactor->name($self->ua_name || $ua_names->[rand @$ua_names]);
   
   if ($self->proxy) { $ua->proxy->http($self->proxy)->https($self->proxy); }
-  elsif ($self->proxy_handler) { $self->change_proxy($ua); }
+  else { $self->change_proxy($ua); }
   
   $ua->proxy->not($self->proxy_not)
     if $self->proxy_not;
@@ -156,38 +154,19 @@ sub mojo_ua {
   return $ua;
 }
 
-sub change_proxy {
-  my ($self, $ua, $proxy) = @_;
+sub change_proxy {# shortcut
+  my ($self,) = shift;
   my $handler = $self->proxy_handler
     or return;
+  $handler->change_proxy(@_);
+}
 
-  #~ if ($ua) {
-  my $ua_proxy = $ua->proxy;
-
-  warn "NEXT TRY for [$ua]: ", $ua_proxy->{_tried}
-    and return $ua_proxy->https || $ua_proxy->http
-      if ($ua_proxy->https || $ua_proxy->http) && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
-  
-  $proxy ||= $ua_proxy->https || $ua_proxy->http;
-  #~ }
-  
-   
-  $handler->bad_proxy($proxy)
-    if $proxy;
-  
-  $proxy = $handler->use_proxy
+sub good_proxy {# shortcut
+  my ($self,) = shift;
+  my $handler = $self->proxy_handler
     or return;
+  $handler->good_proxy(@_);
   
-  #~ print STDERR "Новый прокси [$proxy]\n"
-    #~ if $self->debug;
-  
-  $ua_proxy->http($proxy)->https($proxy)
-    and warn "SET PROXY [$proxy]"
-    if $ua;
-  
-  $ua_proxy->{_tried} = 0;
-  
-  return $proxy;
 }
 
 sub dequeue {
@@ -202,7 +181,7 @@ sub dequeue {
     and warn "NEW UA [@{[ $ua[-1] ]}]"
     while @ua < $count;
   
-  return wantarray ? @ua : $ua[0];
+  return $count == 1 ? $ua[0] : @ua;
 }
 
 sub enqueue {

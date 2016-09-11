@@ -16,6 +16,8 @@ has ua => sub {
   return $ua;
 };
 
+has max_try => 3; # цикл попыток (для смены прокси)
+
 has proxy_url => 'http://hideme.ru/proxy-list/?type=45#list';
 has check_url => '';
 
@@ -64,12 +66,52 @@ sub check_proxy {
   #~ $res->code;
 }
 
-sub good_proxy {
-  my ($self, $proxy) = @_;
-  $proxy = ( $proxy =~ /([\d\.]+:\d+)$/ )[0]
+sub change_proxy {
+  my ($self, $ua, $proxy) = @_;
+
+  #~ if ($ua) {
+  my $ua_proxy = $ua->proxy;
+
+  warn "NEXT TRY for [$ua]: ", $ua_proxy->{_tried}
+    and return $ua_proxy->https || $ua_proxy->http
+      if ($ua_proxy->https || $ua_proxy->http) && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
+  
+  $proxy ||= $ua_proxy->https || $ua_proxy->http;
+  #~ }
+  
+   
+  $self->bad_proxy($proxy)
+    if $proxy;
+  
+  $proxy = $self->good_proxy || $self->use_proxy
     or return;
-  #~ $self->model->status_proxy('G', $proxy);
+  
+  #~ print STDERR "Новый прокси [$proxy]\n"
+    #~ if $self->debug;
+  
+  $ua_proxy->http($proxy)->https($proxy)
+    and warn "SET PROXY [$proxy]"
+    if $ua;
+  
+  $ua_proxy->{_tried} = 0;
+  
+  return $proxy;
 }
+
+sub good_proxy {# save or shift
+  my ($self, $proxy) = @_;
+  my $good = $self->{good_proxy} ||= [];
+  return push @$good, $proxy
+    if $proxy;
+  shift @$good;
+}
+
+#~ sub good_proxy {
+  #~ my ($self, $proxy) = @_;
+  #~ $proxy = ( $proxy =~ /([\d\.]+:\d+)$/ )[0]
+    #~ or return;
+  #~ $self->model->status_proxy('G', $proxy);
+#~ }
 
 sub bad_proxy {
   my ($self, $proxy) = @_;
