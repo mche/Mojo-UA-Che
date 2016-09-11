@@ -259,6 +259,8 @@ L<Mojo::UA>
 
 L<Mojo::Pg>
 
+L<https://habrahabr.ru/post/228141/>
+
 =head1 AUTHOR
 
 Михаил Че (Mikhail Che), C<< <mche[-at-]cpan.org> >>

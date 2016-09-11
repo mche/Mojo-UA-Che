@@ -5,9 +5,6 @@ use Test::More;
 use Mojo::UA::Che;
 
 my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', max_try=>5);
-#~ my $base_url = 'https://metacpan.org/pod/';
-#~ my @modules = qw(CHI 0DBI 0DBD::Pg 00DBIx::Mojo::Template 00AnyEvent Ado);
-#~ my $css = 'ul.slidepanel > li time[itemprop="dateModified"]';
 my $base_url = 'http://mojolicious.org/perldoc/';
 my @modules = qw(Mojo::UserAgent DBI Mojo::Pg Data::Dumper ojo);
 #~ my $css = '#NAME ~ p';
@@ -15,27 +12,6 @@ my $css = 'head title';
 my $limit = 3;
 my $total = @modules;
 #~ unshift @modules, 'http://foobaaar.com/';
-
-
-=pod
-my $cb = sub {
-  my ($ua, $tx) = @_;
-  my $success = $tx->success
-    or die $tx->error->{message};
-  my $code    = $tx->res->code;
-  warn $ua, process_res($tx->res);
-  Mojo::IOLoop->stop;
-};
-
-#~ my $res = $ua->request('get', $base_url . shift @modules);
-
-#~ warn process_res($res);
-
-$ua->request('get', $base_url . shift @modules, $cb) for 1..3;
-Mojo::IOLoop->start;
-
-
-=cut
 
 my $delay = Mojo::IOLoop->delay;
 $delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
