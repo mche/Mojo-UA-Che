@@ -76,8 +76,6 @@ sub change_proxy {
     and return $ua_proxy->https || $ua_proxy->http
       if ($ua_proxy->https || $ua_proxy->http) && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
   
-  
-  
   $proxy ||= $ua_proxy->https || $ua_proxy->http;
   #~ }
   $self->bad_proxy($proxy)
