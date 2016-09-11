@@ -1,4 +1,6 @@
 package Mojo::UA::Che;
+no warnings qw(redefine);
+#~ no warnings 'FATAL'=>'all';
 
 use Mojo::Base -base;
 #~ use Mojo::UA::Che::UA;
@@ -128,7 +130,7 @@ sub process_res {
         #~ 1;
       #~ } else {
   die "Критичная ошибка $res"
-    if $res =~ m'429|403|отказано|premature|Authentication'i && (! $self->proxy_handler) && (($ua->proxy->{_tried} = $self->proxy_handler->max_try) || 1) ;
+    if $res =~ m'429|403|отказано|premature|Auth'i && (! $self->proxy_handler) && (($ua->proxy->{_tried} = $self->proxy_handler->max_try) || 1) ;
   $self->change_proxy($ua);
 }
 
@@ -207,8 +209,9 @@ sub load_class {
 sub Mojo::UserAgent::DESTROY000 {
   my $self = shift;
   my $che = $self->{_ua_che};
-  $che->debug && say  "DESTROY: $self";
-  $che->enqueue($self);
+  $che->debug || 1 && say STDERR "DESTROY: $self";
+  no warnings;
+  eval {$che->enqueue($self)};
   $self->SUPER::DESTROY(@_);
   
 }

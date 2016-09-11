@@ -1,5 +1,5 @@
 use Mojo::Base -strict;
-use binmode(STDERR, ':utf8');
+binmode(STDERR, ':utf8');
 
 use Test::More;
 use Mojo::UA::Che;
@@ -29,7 +29,7 @@ while (@modules) {
     unshift @modules, $mod
       and next
       unless  ref $res;
-    push @success, "$mod: ".process_res($res);
+    push @success, "$mod modified: ".process_res($res);
   }
 }
 

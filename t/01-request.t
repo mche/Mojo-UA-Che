@@ -1,5 +1,5 @@
 use Mojo::Base -strict;
-use binmode(STDERR, ':utf8');
+binmode(STDERR, ':utf8');
 
 use Test::More;
 use Mojo::UA::Che;
@@ -10,7 +10,8 @@ my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', max_try=>5);
 #~ my $css = 'ul.slidepanel > li time[itemprop="dateModified"]';
 my $base_url = 'http://mojolicious.org/perldoc/';
 my @modules = qw(Mojo::UserAgent DBI Mojo::Pg Data::Dumper ojo);
-my $css = '#NAME ~ p';
+#~ my $css = '#NAME ~ p';
+my $css = 'head title';
 my $limit = 3;
 my $total = @modules;
 #~ unshift @modules, 'http://foobaaar.com/';
@@ -48,6 +49,8 @@ $delay->wait;
 
 say STDERR 'DONE ', $_ for @done;
 
+say STDERR $ua->dequeue;
+
 is scalar @done, $total;
 
 sub start {
@@ -66,7 +69,7 @@ sub start {
     say STDERR "AGAIN: [$module] $res"
       and return start($mua, $module)
       unless  ref $res || $res =~ /404/;
-    push @done, "$module: ".process_res($res);
+    push @done, process_res($res);
     start($mua);
     });
 }
