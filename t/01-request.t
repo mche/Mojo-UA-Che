@@ -1,4 +1,5 @@
 use Mojo::Base -strict;
+use binmode(STDERR, ':utf8');
 
 use Test::More;
 use Mojo::UA::Che;
@@ -45,7 +46,9 @@ start($_) for @ua;
 $delay->wait;
 #~ ($delay->wait || 1) and warn "WAIT!!!!" while @done < $total;
 
-warn 'DONE ', $_ for @done;
+say STDERR 'DONE ', $_ for @done;
+
+is scalar @done, $total;
 
 sub start {
   my $mojo_ua = shift();# || $ua->dequeue;
@@ -60,7 +63,7 @@ sub start {
     my ($mua, $tx) = @_;
     my $res = $ua->process_tx($tx, $mua);
     #~ $end->();
-    warn "AGAIN: [$module] $res"
+    say STDERR "AGAIN: [$module] $res"
       and return start($mua, $module)
       unless  ref $res || $res =~ /404/;
     push @done, "$module: ".process_res($res);

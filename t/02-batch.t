@@ -1,4 +1,5 @@
 use Mojo::Base -strict;
+use binmode(STDERR, ':utf8');
 
 use Test::More;
 use Mojo::UA::Che;
@@ -6,7 +7,8 @@ use Mojo::UA::Che;
 my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', max_try=>5);
 my $base_url = 'https://metacpan.org/pod/';
 my @modules = qw(Scalar::Util Mojolicious Mojo::Pg Mojo::Pg::Che DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
-
+my $limit = 3;
+my $total = @modules;
 
 sub process_res {
   my $res = shift;
@@ -19,7 +21,8 @@ sub process_res {
 my @success = ();
 
 while (@modules) {
-  my @mod = splice @modules, 0, 4;
+  my @mod = splice @modules, 0, $limit;
+  say STDERR "BATCH: @mod";
   my @res = $ua->batch(map ['get', $base_url.$_], @mod);
   for my $res (@res) {
     my $mod = shift @mod;
@@ -30,10 +33,8 @@ while (@modules) {
   }
 }
 
+say STDERR 'DONE ', $_ for @success;
 
-
-
-warn $_ for @success;
-
+is scalar @success, $total;
 
 done_testing();

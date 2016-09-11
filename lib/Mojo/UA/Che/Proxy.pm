@@ -23,6 +23,8 @@ has check_url => '';
 
 has list => sub {[]};
 
+has qw(debug);
+
 
 sub proxy_load {# загрузка списка
   my $self = shift;
@@ -72,7 +74,7 @@ sub change_proxy {
   #~ if ($ua) {
   my $ua_proxy = $ua->proxy;
 
-  warn "NEXT TRY for [$ua]: ", $ua_proxy->{_tried}
+  ($self->debug && say STDERR "NEXT TRY for [$ua]: ", $ua_proxy->{_tried}) || 1
     and return $ua_proxy->https || $ua_proxy->http
       if ($ua_proxy->https || $ua_proxy->http) && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
   
@@ -91,7 +93,7 @@ sub change_proxy {
     #~ if $self->debug;
   
   $ua_proxy->http($proxy)->https($proxy)
-    and warn "SET PROXY [$proxy]";
+    and $self->debug && say STDERR "SET PROXY [$proxy]";
   
   $ua_proxy->{_tried} = 0;
   

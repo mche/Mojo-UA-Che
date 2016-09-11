@@ -128,7 +128,7 @@ sub process_res {
         #~ 1;
       #~ } else {
   die "Критичная ошибка $res"
-    if $res =~ m'429|403|отказано|premature|Authentication'i && ! $self->proxy_handler || (($ua->proxy->{_tried} = $self->proxy_handler->max_try) || 1) ;
+    if $res =~ m'429|403|отказано|premature|Authentication'i && (! $self->proxy_handler) && (($ua->proxy->{_tried} = $self->proxy_handler->max_try) || 1) ;
   $self->change_proxy($ua);
 }
 
@@ -174,11 +174,11 @@ sub dequeue {
   $count ||= 1;
 
   my @ua = splice @{$self->{queue} ||= []}, 0, $count;
-  warn "SHIFT QUEUE [@ua]"
+  $self->debug && say STDERR "SHIFT QUEUE [@ua]"
     if @ua;
   
   push @ua, $self->mojo_ua
-    and warn "NEW UA [@{[ $ua[-1] ]}]"
+    and $self->debug && say  "NEW UA [@{[ $ua[-1] ]}]"
     while @ua < $count;
   
   return $count == 1 ? $ua[0] : @ua;
@@ -188,7 +188,7 @@ sub enqueue {
   my ($self, @ua) = @_;
   my $queue = $self->{queue} ||= [];
   push @$queue, shift @ua
-    and warn "PUSH QUEUE [@{[ $queue->[-1] ]}]"
+    and $self->debug && say  "PUSH QUEUE [@{[ $queue->[-1] ]}]"
     while (!$self->max_queque || @$queue < $self->max_queque) && @ua;
   #~ shift @$queue while @$queue > $self->max_connections;
 }
@@ -204,10 +204,10 @@ sub load_class {
   return $class;
 }
 
-sub Mojo::UserAgent::DESTROY {
+sub Mojo::UserAgent::DESTROY000 {
   my $self = shift;
-  warn "DESTROY: $self";
   my $che = $self->{_ua_che};
+  $che->debug && say  "DESTROY: $self";
   $che->enqueue($self);
   $self->SUPER::DESTROY(@_);
   
