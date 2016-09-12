@@ -193,6 +193,7 @@ sub enqueue {
     and $self->debug && say  "PUSH QUEUE [@{[ $queue->[-1] ]}]"
     while (!$self->max_queque || @$queue < $self->max_queque) && @ua;
   #~ shift @$queue while @$queue > $self->max_connections;
+  return scalar @ua;
 }
 
 sub dump {shift; say STDERR dumper(@_);}
