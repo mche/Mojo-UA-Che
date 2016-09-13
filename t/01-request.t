@@ -12,34 +12,34 @@ my $delay = Mojo::IOLoop->delay;
 $delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
 
 my $test = sub {
-  my $ua = shift;
+  my $che = shift;
   my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI);
   my $total = @modules;
-  my @ua = $ua->proxy_handler ?
-      $ua->dequeue($limit)
-    : (($ua->dequeue) x $limit)
+  my @ua = $che->proxy_handler ?
+      $che->dequeue($limit)
+    : (($che->dequeue) x $limit)
   #~ $delay->data(ua=>\@ua);
   my @done = ();
   start($_) for @ua;
   $delay->wait;
   say STDERR 'Module ', $_ for @done;
 
-  $ua->enqueque(@ua);
+  $che->enqueque(@ua);
 
   is scalar @done, $total, 'proxying good';
 };
 
-subtest 'Proxying' => $test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5});
+subtest 'Proxying' => $test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5}, debug=>1);
 
 subtest 'Normal' => $test, Mojo::UA::Che->new();
 
 sub start {
-  my $mojo_ua = shift();# || $ua->dequeue;
+  my $ua = shift;# || $ua->dequeue;
   my $module = shift() || shift @modules
     || return;
   my $url = $base_url.$module;
   my $end = $delay->begin;
-  $mojo_ua->get( $url => sub {
+  $ua->get( $url => sub {
     $end->();
     my ($mua, $tx) = @_;
     my $res = $ua->process_tx($tx, $mua);
