@@ -1,4 +1,4 @@
-package Mojo::UA::Che;
+package Mojo::UA::Che2;
 no warnings qw(redefine);
 #~ no warnings 'FATAL'=>'all';
 
@@ -36,23 +36,18 @@ has cookie_ignore => 0;
 
 has proxy_module_has => sub { {} };
 
+has proxy_max_try => 3;
+
 #~ has _proxy_module_has => sub { {max_try => 3} };# опции для new proxy_module
 has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; load_class($self->proxy_module)->new(%{$self->proxy_module_has})};
 
 has proxy_not => sub {[]};
 
-#~ sub ua {
-  #~ my $self = shift;
-  
-  #~ return $self->ua_class->new(ua => $self->dequeue, top => $self, max_try => $self->max_try);
-  
-#~ }
-
 my $pkg = __PACKAGE__;
 
-#~ sub new {
-  #~ shift->SUPER::new(@_)->ua($self->mojo_ua);
-#~ }
+sub new {
+  shift->SUPER::new(@_)->ua($self->mojo_ua);
+}
 
 sub request {
   my $self = shift;
@@ -128,16 +123,23 @@ sub process_tx {
     utf8::decode($res);
   }
   
-  $self->process_res($res, $ua);
+  #~ $self->process_res($res, $tx);
   
   return $res;
   
 }
 
 sub process_res {
-  my ($self, $res, $ua) = @_;
-  return $self->good_proxy($ua->proxy->https ||  $ua->proxy->http)
-    if ref $res || $res =~ m'404';# success
+  my ($self, $res, $tx) = @_;
+  
+  my $proxy = $tx->req->proxy;
+  
+  if (ref $res || $res =~ m'404') {
+    $self->good_proxy($proxy)
+  }
+  
+  
+    if ;# success
   #~ if () {
         #~ $self->proxy_handler->good_proxy($ua->proxy->https ||  $ua->proxy->http)
           #~ if $self->proxy_handler;
@@ -162,15 +164,48 @@ sub mojo_ua {
   my $ua_names = $self->ua_names;
   $ua->transactor->name($self->ua_name || $ua_names->[rand @$ua_names]);
   
+  $ua->proxy($self->proxy_handler)
+    if $self->proxy_handler;
+  
   if ($self->proxy) { $ua->proxy->http($self->proxy)->https($self->proxy); }
-  else { $self->change_proxy($ua); }
+  #~ else { $self->change_proxy($ua); }
+  
   
   $ua->proxy->not($self->proxy_not)
     if $self->proxy_not;
   
-  $ua->{$pkg} = $self;
+  #~ $ua->{$pkg} = $self;
+  
+  $ua->on(start=>sub {$self->on_start_tx(@_)});
   
   return $ua;
+}
+
+sub on_start_tx {
+  my ($self, $ua, $tx) = @_;
+  return unless $self->proxy_handler;
+  my $proxy = $self->proxy_handler->use_proxy;
+  $self->proxy_handler->http($proxy)->https($proxy)->prepare($tx);
+  $tx->{_tried}=0;
+  $tx->on(finish => sub {$self->on_finish_tx(@_)});
+}
+
+sub on_finish_tx {
+  my ($self, $tx) = @_;
+  my $handler = $self->proxy_handler
+    or return;
+  my $proxy = $tx->req->proxy
+    or return;
+  # заглянуть в ответ
+  $res = $self->process_tx($tx);
+  return $self->good_proxy($proxy)
+    if ref $res || $res =~ m'404';
+    
+  return # стоп попытки прокси
+    unless defined $tx->{_tried} && $tx->{_tried}++ < $self->proxy_max_try;
+    
+  say STDERR "NEXT TRY[$tx->{_tried}] for proxy [$proxy]";
+  $tx->resume;
 }
 
 sub change_proxy {# shortcut
@@ -224,13 +259,16 @@ sub load_class {
   return $class;
 }
 
-sub Mojo::UserAgent::DESTROY000 {
+our $AUTOLOAD;
+sub  AUTOLOAD {
+  my ($method) = $AUTOLOAD =~ /([^:]+)$/;
   my $self = shift;
-  my $che = $self->{$pkg};
-  $che->debug || 1 && say STDERR "DESTROY: $self";
-  no warnings;
-  eval {$che->enqueue($self)};
-  $self->SUPER::DESTROY(@_);
+  my $ua = $self->ua;
+  
+  return $ua->$method(@_)
+    if ($ua->can($method);
+  
+  die sprintf qq{Can't locate autoloaded object method "%s" (%s) via package "%s" at %s line %s.\n}, $method, $AUTOLOAD, ref $self, (caller)[1,2];
   
 }
 =pod
@@ -249,11 +287,11 @@ Mojo::UA::Che - Mojo::UserAgent for proxying async req.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 =head1 SYNOPSIS
