@@ -4,36 +4,38 @@ binmode(STDERR, ':utf8');
 use Test::More;
 use Mojo::UA::Che;
 
-my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', max_try=>5);
 my $base_url = 'http://mojolicious.org/perldoc/';
-my @modules = qw(Mojo::UserAgent DBI Mojo::Pg Data::Dumper ojo);
-#~ my $css = '#NAME ~ p';
-my $css = 'head title';
+#~ my $dom_select = '#NAME ~ p';
+my $dom_select = 'head title';
 my $limit = 3;
-my $total = @modules;
-#~ unshift @modules, 'http://foobaaar.com/';
-
 my $delay = Mojo::IOLoop->delay;
 $delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
-my @ua; push @ua, $ua->dequeue for 1..$limit;
-#~ push @{$delay->data->{ua} ||= []}, 
-my @done = ();
-start($_) for @ua;
 
-$delay->wait;
-#~ ($delay->wait || 1) and warn "WAIT!!!!" while @done < $total;
+my $test = sub {
+  my $ua = shift;
+  my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI);
+  my $total = @modules;
+  my @ua = $ua->proxy_handler ?
+      $ua->dequeue($limit)
+    : (($ua->dequeue) x $limit)
+  #~ $delay->data(ua=>\@ua);
+  my @done = ();
+  start($_) for @ua;
+  $delay->wait;
+  say STDERR 'Module ', $_ for @done;
 
-say STDERR 'DONE ', $_ for @done;
+  $ua->enqueque(@ua);
 
-say STDERR $ua->dequeue;
+  is scalar @done, $total, 'proxying good';
+};
 
-is scalar @done, $total;
+subtest 'Proxying' => $test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5});
+
+subtest 'Normal' => $test, Mojo::UA::Che->new();
 
 sub start {
   my $mojo_ua = shift();# || $ua->dequeue;
   my $module = shift() || shift @modules
-  #~ $delay->begin
-    #~ and return
     || return;
   my $url = $base_url.$module;
   my $end = $delay->begin;
@@ -54,7 +56,7 @@ sub process_res {
   my $res = shift;
   return $res
     unless ref $res;
-  $res->dom->at($css)->text;
+  $res->dom->at($dom_select)->text;
   
 }
 

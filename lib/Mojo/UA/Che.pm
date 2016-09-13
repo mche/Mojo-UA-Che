@@ -63,9 +63,10 @@ sub batch {
   my ($self, @batch) = @_; # список arrayrefs   ['get', @args], ['post', @args], ...
   my $delay = Mojo::IOLoop->delay;
   my @res = ();
-  my @ua = $self->proxy_handler ? $self->dequeue(scalar @batch)
-    : (($self->dequeue) x @batch)
-  ;
+  my @ua = $self->proxy_handler ?
+      $self->dequeue(scalar @batch)
+    : (($self->dequeue) x @batch);
+  
   $delay->data(ua =>\@ua);# копировать!!!
   $delay->steps(
   sub {
@@ -129,8 +130,11 @@ sub process_res {
           #~ if $self->proxy_handler;
         #~ 1;
       #~ } else {
-  die "Критичная ошибка $res"
-    if $res =~ m'429|403|отказано|premature|Auth'i && (! $self->proxy_handler) && (($ua->proxy->{_tried} = $self->proxy_handler->max_try) || 1) ;
+  if ($res =~ m'429|403|отказано|premature|Auth'i) {
+    die "Критичная ошибка $res"
+      unless $self->proxy_handler;
+    $ua->proxy->{_tried} = $self->proxy_handler->max_try + 1;
+  }
   $self->change_proxy($ua);
 }
 
@@ -228,15 +232,15 @@ sub Mojo::UserAgent::DESTROY000 {
 
 =head1 NAME
 
-Mojo::UA::Che - Like (idea) Mojo::Pg for mojo user agent
+Mojo::UA::Che - Mojo::UserAgent for proxying async req.
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 =head1 SYNOPSIS
