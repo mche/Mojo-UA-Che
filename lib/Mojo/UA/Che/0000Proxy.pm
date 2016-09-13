@@ -1,5 +1,5 @@
-package Mojo::UA::Che::Proxy2;
-use Mojo::Base 'Mojo::UserAgent::Proxy';
+package Mojo::UA::Che::Proxy;
+use Mojo::Base -base;
 use Mojo::UserAgent;
 
 has ua_has => sub { {} };
