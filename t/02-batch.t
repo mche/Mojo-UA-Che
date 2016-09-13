@@ -4,7 +4,6 @@ binmode(STDERR, ':utf8');
 use Test::More;
 use Mojo::UA::Che;
 
-my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has => {max_try=>5});
 my $base_url = 'https://metacpan.org/pod/';
 my @modules = qw(Scalar::Util Mojolicious Mojo::Pg Test::More DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
 my $limit = 3;
@@ -18,23 +17,31 @@ sub process_res {
   
 }
 
-my @success = ();
+sub test {
+  my ($che, @modules) = @_;
+  my @done = ();
 
-while (@modules) {
-  my @mod = splice @modules, 0, $limit;
-  say STDERR "BATCH: @mod";
-  my @res = $ua->batch(map ['get', $base_url.$_], @mod);
-  for my $res (@res) {
-    my $mod = shift @mod;
-    unshift @modules, $mod
-      and next
-      unless  ref $res;
-    push @success, "$mod modified: ".process_res($res);
+  while (@modules) {
+    my @mod = splice @modules, 0, $limit;
+    say STDERR "BATCH: @mod";
+    my @res = $ua->batch(map [get => $base_url.$_], @mod);
+    for my $res (@res) {
+      my $mod = shift @mod;
+      unshift @modules, $mod
+        and next
+        unless  ref $res;
+      push @done, "$mod modified: ".process_res($res);
+    }
   }
+
+  say STDERR 'Module ', $_ for @done;
+
+  is scalar @done, $total;
+  
 }
 
-say STDERR 'DONE ', $_ for @success;
+subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5, debug=>0,}, debug=>1, cookie_ignore=>1), @modules;
 
-is scalar @success, $total;
+subtest 'Normal' => \&test, Mojo::UA::Che->new(cookie_ignore=>1), @modules;
 
 done_testing();

@@ -13,14 +13,14 @@ my $delay = Mojo::IOLoop->delay;
 $delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
 my @done = ();
 
-my $test = sub {
+sub test {
   my $che = shift;
+  #~ say STDERR "DEBUG: ", $che->debug;
   my $total = @modules;
   my @ua = $che->proxy_handler ?
       $che->dequeue($limit)
     : (($che->dequeue) x $limit);
   #~ $delay->data(ua=>\@ua);
-  my @done = ();
   start($_) for @ua;
   $delay->wait;
   say STDERR 'Module ', $_ for @done;
@@ -28,14 +28,19 @@ my $test = sub {
   $che->enqueue(@ua);
 
   is scalar @done, $total, 'proxying good';
-};
+  
+}
 
-subtest 'Proxying' => $test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5}, debug=>1);
+subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5, debug=>0,}, debug=>1, cookie_ignore=>1);
+
+pass 'proxying';
 
 @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI);
 @done = ();
 
-subtest 'Normal' => $test, Mojo::UA::Che->new();
+subtest 'Normal' => \&test, Mojo::UA::Che->new(cookie_ignore=>1);
+
+pass 'normal';
 
 sub start {
   my $ua = shift;# || $ua->dequeue;

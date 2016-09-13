@@ -28,7 +28,13 @@ has max_queque => 0; # 0 - неограниченное количество а�
 
 #~ has ua_class => 'Mojo::UA::Che::UA';
 
-has [qw'debug proxy_module proxy_module_has proxy cookie_ignore'];
+has [qw'proxy_module  proxy '];
+
+has debug => 0;
+
+has cookie_ignore => 0;
+
+has proxy_module_has => sub { {} };
 
 #~ has _proxy_module_has => sub { {max_try => 3} };# опции для new proxy_module
 has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; load_class($self->proxy_module)->new(%{$self->proxy_module_has})};
@@ -44,9 +50,9 @@ has proxy_not => sub {[]};
 
 my $pkg = __PACKAGE__;
 
-sub new {
-  shift->SUPER::new(@_);
-}
+#~ sub new {
+  #~ shift->SUPER::new(@_);
+#~ }
 
 sub request {
   my $self = shift;
@@ -107,6 +113,7 @@ sub batch {
     warn "CATCH: ", $err;
     $delay->emit(finish => 'failed');
   });
+  
   $delay->wait;
   return @res;
 }
@@ -186,11 +193,11 @@ sub dequeue {
   $count ||= 1;
 
   my @ua = splice @{$self->{queue} ||= []}, 0, $count;
-  $self->debug && say STDERR "SHIFT QUEUE [@ua]"
-    if @ua;
+  say STDERR "SHIFT QUEUE [@ua]"
+    if $self->debug && @ua;
   
   push @ua, $self->mojo_ua
-    and $self->debug && say  "NEW UA [@{[ $ua[-1] ]}]"
+    and $self->debug && say STDERR "NEW UA [@{[ $ua[-1] ]}]"
     while @ua < $count;
   
   return $count == 1 ? $ua[0] : @ua;
@@ -200,7 +207,7 @@ sub enqueue {
   my ($self, @ua) = @_;
   my $queue = $self->{queue} ||= [];
   push @$queue, shift @ua
-    and $self->debug && say  "PUSH QUEUE [@{[ $queue->[-1] ]}]"
+    and $self->debug && say STDERR "PUSH QUEUE [@{[ $queue->[-1] ]}]"
     while (!$self->max_queque || @$queue < $self->max_queque) && @ua;
   #~ shift @$queue while @$queue > $self->max_connections;
   return scalar @ua;
