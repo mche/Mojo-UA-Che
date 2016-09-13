@@ -61,11 +61,11 @@ DIRFILESEP = /
 DFSEP = $(DIRFILESEP)
 NAME = Mojo::UA::Che
 NAME_SYM = Mojo_UA_Che
-VERSION = 0.02
+VERSION = 0.03
 VERSION_MACRO = VERSION
-VERSION_SYM = 0_02
+VERSION_SYM = 0_03
 DEFINE_VERSION = -D$(VERSION_MACRO)=\"$(VERSION)\"
-XS_VERSION = 0.02
+XS_VERSION = 0.03
 XS_VERSION_MACRO = XS_VERSION
 XS_DEFINE_VERSION = -D$(XS_VERSION_MACRO)=\"$(XS_VERSION)\"
 INST_ARCHLIB = blib/arch
@@ -166,6 +166,7 @@ O_FILES  =
 H_FILES  = 
 MAN1PODS = 
 MAN3PODS = README.pod \
+	lib/Mojo/UA/000Che.pm \
 	lib/Mojo/UA/Che.pm
 
 # Where is the Config information that we are using/depend on
@@ -190,14 +191,20 @@ PERL_ARCHIVE_AFTER =
 
 
 TO_INST_PM = README.pod \
+	lib/Mojo/UA/000Che.pm \
 	lib/Mojo/UA/Che.pm \
+	lib/Mojo/UA/Che/0000Proxy.pm \
 	lib/Mojo/UA/Che/Proxy.pm \
 	lib/Mojo/UA/Che/UA.pm
 
 PM_TO_BLIB = README.pod \
 	$(INST_LIB)/Mojo/UA/README.pod \
+	lib/Mojo/UA/000Che.pm \
+	blib/lib/Mojo/UA/000Che.pm \
 	lib/Mojo/UA/Che.pm \
 	blib/lib/Mojo/UA/Che.pm \
+	lib/Mojo/UA/Che/0000Proxy.pm \
+	blib/lib/Mojo/UA/Che/0000Proxy.pm \
 	lib/Mojo/UA/Che/Proxy.pm \
 	blib/lib/Mojo/UA/Che/Proxy.pm \
 	lib/Mojo/UA/Che/UA.pm \
@@ -271,7 +278,7 @@ RCS_LABEL = rcs -Nv$(VERSION_SYM): -q
 DIST_CP = best
 DIST_DEFAULT = tardist
 DISTNAME = Mojo-UA-Che
-DISTVNAME = Mojo-UA-Che-0.02
+DISTVNAME = Mojo-UA-Che-0.03
 
 
 # --- MakeMaker macro section:
@@ -426,9 +433,11 @@ POD2MAN = $(POD2MAN_EXE)
 
 manifypods : pure_all  \
 	README.pod \
+	lib/Mojo/UA/000Che.pm \
 	lib/Mojo/UA/Che.pm
 	$(NOECHO) $(POD2MAN) --section=3 --perm_rw=$(PERM_RW) -u \
 	  README.pod $(INST_MAN3DIR)/Mojo::UA::README.$(MAN3EXT) \
+	  lib/Mojo/UA/000Che.pm $(INST_MAN3DIR)/Mojo::UA::000Che.$(MAN3EXT) \
 	  lib/Mojo/UA/Che.pm $(INST_MAN3DIR)/Mojo::UA::Che.$(MAN3EXT) 
 
 
@@ -517,7 +526,7 @@ metafile : create_distdir
 	$(NOECHO) $(ECHO) 'requires:' >> META_new.yml
 	$(NOECHO) $(ECHO) '  Mojolicious: '\''7'\''' >> META_new.yml
 	$(NOECHO) $(ECHO) '  perl: '\''5.006'\''' >> META_new.yml
-	$(NOECHO) $(ECHO) 'version: '\''0.02'\''' >> META_new.yml
+	$(NOECHO) $(ECHO) 'version: '\''0.03'\''' >> META_new.yml
 	$(NOECHO) $(ECHO) 'x_serialization_backend: '\''CPAN::Meta::YAML version 0.018'\''' >> META_new.yml
 	-$(NOECHO) $(MV) META_new.yml $(DISTVNAME)/META.yml
 	$(NOECHO) $(ECHO) Generating META.json
@@ -561,7 +570,7 @@ metafile : create_distdir
 	$(NOECHO) $(ECHO) '      }' >> META_new.json
 	$(NOECHO) $(ECHO) '   },' >> META_new.json
 	$(NOECHO) $(ECHO) '   "release_status" : "stable",' >> META_new.json
-	$(NOECHO) $(ECHO) '   "version" : "0.02",' >> META_new.json
+	$(NOECHO) $(ECHO) '   "version" : "0.03",' >> META_new.json
 	$(NOECHO) $(ECHO) '   "x_serialization_backend" : "JSON::PP version 2.27300"' >> META_new.json
 	$(NOECHO) $(ECHO) '}' >> META_new.json
 	-$(NOECHO) $(MV) META_new.json $(DISTVNAME)/META.json
@@ -880,7 +889,9 @@ ppd :
 pm_to_blib : $(FIRST_MAKEFILE) $(TO_INST_PM)
 	$(NOECHO) $(ABSPERLRUN) -MExtUtils::Install -e 'pm_to_blib({@ARGV}, '\''$(INST_LIB)/auto'\'', q[$(PM_FILTER)], '\''$(PERM_DIR)'\'')' -- \
 	  README.pod $(INST_LIB)/Mojo/UA/README.pod \
+	  lib/Mojo/UA/000Che.pm blib/lib/Mojo/UA/000Che.pm \
 	  lib/Mojo/UA/Che.pm blib/lib/Mojo/UA/Che.pm \
+	  lib/Mojo/UA/Che/0000Proxy.pm blib/lib/Mojo/UA/Che/0000Proxy.pm \
 	  lib/Mojo/UA/Che/Proxy.pm blib/lib/Mojo/UA/Che/Proxy.pm \
 	  lib/Mojo/UA/Che/UA.pm blib/lib/Mojo/UA/Che/UA.pm 
 	$(NOECHO) $(TOUCH) pm_to_blib

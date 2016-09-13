@@ -163,12 +163,15 @@ sub mojo_ua {
 sub on_start_tx {
   my ($self, $ua, $tx) = @_;
   return unless $self->proxy_handler;
+  say STDERR "START TX [$tx]";
   $self->prepare_tx($tx);
   $tx->on(finish => sub {$self->on_finish_tx(@_)});
 }
 
-sub prepare_tx {
+sub prepare_tx {#  set proxy
   my ($self, $tx) = @_;
+  return $tx # уже установлен прокси
+    if $tx->req->proxy;
   my $proxy = $self->proxy_handler->use_proxy;
   $self->proxy_handler->http($proxy)->https($proxy)->prepare($tx);
   $tx->{_tried}=0;
@@ -181,23 +184,27 @@ sub on_finish_tx {
   my $handler = $self->proxy_handler
     or return;
   my $proxy = $tx->req->proxy
-    or return;
+    or say STDERR "FINISH NO PROXY"
+    and return;
   # заглянуть в ответ
   my $res = $self->process_tx($tx);
-  return $self->good_proxy($proxy)
+  say STDERR "GOOD PROXY [$proxy]"
+    and return $self->good_proxy($proxy)
     if ref $res || $res =~ m'404';
     
   if ($res =~ m'429|403|отказано|premature|Auth'i) {
     say STDERR "Fail proxy [$proxy] $res";
     return 
-      if $tx->{_failed}++ > $self->proxy_max_fail;
-    return $self->prepare_tx($tx)->resume;
+      if ++$tx->{_failed} > $self->proxy_max_fail;
+    # смена прокси
+    $tx->req->proxy(undef);# сбросить для смены прокси
+    return $tx->resume;
   }
   
   return # стоп попытки прокси
     unless defined $tx->{_tried} && $tx->{_tried}++ < $self->proxy_max_try;
     
-  say STDERR "NEXT TRY[$tx->{_tried}] for proxy [$proxy]";
+  say STDERR "NEXT TRY[$tx->{_tried}] for proxy [$proxy] $res";
   $tx->resume;
 }
 

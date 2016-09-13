@@ -27,7 +27,7 @@ sub test {
   
 }
 
-subtest 'Proxying' => \&test, Mojo::UA::Che->new( debug=>1, cookie_ignore=>1);
+subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module_has=>{debug=>1,}, debug=>1, cookie_ignore=>1);
 
 #~ pass 'proxying';
 
