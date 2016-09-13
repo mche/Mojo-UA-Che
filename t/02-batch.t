@@ -2,6 +2,10 @@ use Mojo::Base -strict;
 binmode(STDERR, ':utf8');
 
 use Test::More;
+
+plan skip_all => 'skiping: IO::Socket::SSL require'
+  unless eval {require IO::Socket::SSL};
+
 use Mojo::UA::Che;
 
 my $base_url = 'https://metacpan.org/pod/';
@@ -29,7 +33,7 @@ sub test {
       my $mod = shift @mod;
       unshift @modules, $mod
         and next
-        unless  ref $res;
+        unless  ref $res || $res =~ /404/;
       push @done, "$mod modified: ".process_res($res);
     }
   }
@@ -43,5 +47,6 @@ sub test {
 subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5, debug=>1,}, debug=>1, cookie_ignore=>1), @modules;
 
 subtest 'Normal' => \&test, Mojo::UA::Che->new(debug=>1, cookie_ignore=>1), @modules;
+
 
 done_testing();

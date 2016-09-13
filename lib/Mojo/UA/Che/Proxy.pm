@@ -70,16 +70,13 @@ sub check_proxy {
 
 sub change_proxy {
   my ($self, $ua, $proxy) = @_;
-
-  #~ if ($ua) {
   my $ua_proxy = $ua->proxy;
-
-  ($self->debug && say STDERR "NEXT TRY for [$ua]: ", $ua_proxy->{_tried}) || 1
-    and return $ua_proxy->https || $ua_proxy->http
-      if ($ua_proxy->https || $ua_proxy->http) && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
-  
   $proxy ||= $ua_proxy->https || $ua_proxy->http;
-  #~ }
+  
+  ($self->debug && say STDERR "NEXT TRY[$ua_proxy->{_tried}] proxy[$proxy] for [$ua]") || 1
+    and return $proxy
+      if $proxy && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
+  
   $self->bad_proxy($proxy)
     if $proxy;
   
@@ -88,9 +85,6 @@ sub change_proxy {
     $ua_proxy->{_tried} = 0;
     return undef;
   }
-  
-  #~ print STDERR "Новый прокси [$proxy]\n"
-    #~ if $self->debug;
   
   $ua_proxy->http($proxy)->https($proxy)
     and $self->debug && say STDERR "SET PROXY [$proxy]";
@@ -106,8 +100,9 @@ sub good_proxy {# save or shift
   ($self->debug && say STDERR "SAVE GOOD PROXY: [$proxy]") || 1
     and return push @$good, $proxy
       if $proxy;
-  $self->debug && @$good && say STDERR "USE GOOD PROXY: [$proxy]";
-  return shift @$good;
+  $proxy = shift @$good;
+  $self->debug && $proxy && say STDERR "USE GOOD PROXY: [$proxy]";
+  return $proxy;
 }
 
 #~ sub good_proxy {
