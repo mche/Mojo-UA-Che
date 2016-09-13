@@ -24,7 +24,7 @@ sub test {
   while (@modules) {
     my @mod = splice @modules, 0, $limit;
     say STDERR "BATCH: @mod";
-    my @res = $ua->batch(map [get => $base_url.$_], @mod);
+    my @res = $che->batch(map [get => $base_url.$_], @mod);
     for my $res (@res) {
       my $mod = shift @mod;
       unshift @modules, $mod
@@ -40,8 +40,8 @@ sub test {
   
 }
 
-subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5, debug=>0,}, debug=>1, cookie_ignore=>1), @modules;
+subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5, debug=>1,}, debug=>1, cookie_ignore=>1), @modules;
 
-subtest 'Normal' => \&test, Mojo::UA::Che->new(cookie_ignore=>1), @modules;
+subtest 'Normal' => \&test, Mojo::UA::Che->new(debug=>1, cookie_ignore=>1), @modules;
 
 done_testing();

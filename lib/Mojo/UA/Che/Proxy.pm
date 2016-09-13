@@ -103,9 +103,11 @@ sub change_proxy {
 sub good_proxy {# save or shift
   my ($self, $proxy) = @_;
   my $good = $self->{good_proxy} ||= [];
-  return push @$good, $proxy
-    if $proxy;
-  shift @$good;
+  ($self->debug && say STDERR "SAVE GOOD PROXY: [$proxy]") || 1
+    and return push @$good, $proxy
+      if $proxy;
+  $self->debug && @$good && say STDERR "USE GOOD PROXY: [$proxy]";
+  return shift @$good;
 }
 
 #~ sub good_proxy {

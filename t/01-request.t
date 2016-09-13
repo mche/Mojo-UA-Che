@@ -25,20 +25,20 @@ sub test {
   $delay->wait;
   say STDERR 'Module ', $_ for @done;
 
-  $che->enqueue(@ua);
+  $che->enqueue($che->proxy_handler ? @ua : $ua[0]);
 
   is scalar @done, $total, 'proxying good';
   
 }
 
-subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5, debug=>0,}, debug=>1, cookie_ignore=>1);
+subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>3, debug=>1,}, debug=>1, cookie_ignore=>1);
 
 pass 'proxying';
 
 @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI);
 @done = ();
 
-subtest 'Normal' => \&test, Mojo::UA::Che->new(cookie_ignore=>1);
+subtest 'Normal' => \&test, Mojo::UA::Che->new(debug=>1, cookie_ignore=>1);
 
 pass 'normal';
 
