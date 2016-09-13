@@ -61,11 +61,11 @@ DIRFILESEP = /
 DFSEP = $(DIRFILESEP)
 NAME = Mojo::UA::Che
 NAME_SYM = Mojo_UA_Che
-VERSION = 0.01
+VERSION = 0.02
 VERSION_MACRO = VERSION
-VERSION_SYM = 0_01
+VERSION_SYM = 0_02
 DEFINE_VERSION = -D$(VERSION_MACRO)=\"$(VERSION)\"
-XS_VERSION = 0.01
+XS_VERSION = 0.02
 XS_VERSION_MACRO = XS_VERSION
 XS_DEFINE_VERSION = -D$(XS_VERSION_MACRO)=\"$(XS_VERSION)\"
 INST_ARCHLIB = blib/arch
@@ -271,7 +271,7 @@ RCS_LABEL = rcs -Nv$(VERSION_SYM): -q
 DIST_CP = best
 DIST_DEFAULT = tardist
 DISTNAME = Mojo-UA-Che
-DISTVNAME = Mojo-UA-Che-0.01
+DISTVNAME = Mojo-UA-Che-0.02
 
 
 # --- MakeMaker macro section:
@@ -487,7 +487,7 @@ realclean_subdirs :
 # Delete temporary files (via clean) and also delete dist files
 realclean purge ::  clean realclean_subdirs
 	- $(RM_F) \
-	  $(MAKEFILE_OLD) $(FIRST_MAKEFILE) 
+	  $(FIRST_MAKEFILE) $(MAKEFILE_OLD) 
 	- $(RM_RF) \
 	  $(DISTVNAME) 
 
@@ -496,7 +496,7 @@ realclean purge ::  clean realclean_subdirs
 metafile : create_distdir
 	$(NOECHO) $(ECHO) Generating META.yml
 	$(NOECHO) $(ECHO) '---' > META_new.yml
-	$(NOECHO) $(ECHO) 'abstract: '\''Like (idea) Mojo::Pg for mojo user agent'\''' >> META_new.yml
+	$(NOECHO) $(ECHO) 'abstract: '\''Mojo::UserAgent for proxying async req.'\''' >> META_new.yml
 	$(NOECHO) $(ECHO) 'author:' >> META_new.yml
 	$(NOECHO) $(ECHO) '  - "Ð\x9CÐ¸Ñ\NÐ°Ð¸Ð» Ð§Ðµ (Mikhail Che) <mche[-at-]cpan.org>"' >> META_new.yml
 	$(NOECHO) $(ECHO) 'build_requires:' >> META_new.yml
@@ -517,12 +517,12 @@ metafile : create_distdir
 	$(NOECHO) $(ECHO) 'requires:' >> META_new.yml
 	$(NOECHO) $(ECHO) '  Mojolicious: '\''7'\''' >> META_new.yml
 	$(NOECHO) $(ECHO) '  perl: '\''5.006'\''' >> META_new.yml
-	$(NOECHO) $(ECHO) 'version: '\''0.01'\''' >> META_new.yml
+	$(NOECHO) $(ECHO) 'version: '\''0.02'\''' >> META_new.yml
 	$(NOECHO) $(ECHO) 'x_serialization_backend: '\''CPAN::Meta::YAML version 0.018'\''' >> META_new.yml
 	-$(NOECHO) $(MV) META_new.yml $(DISTVNAME)/META.yml
 	$(NOECHO) $(ECHO) Generating META.json
 	$(NOECHO) $(ECHO) '{' > META_new.json
-	$(NOECHO) $(ECHO) '   "abstract" : "Like (idea) Mojo::Pg for mojo user agent",' >> META_new.json
+	$(NOECHO) $(ECHO) '   "abstract" : "Mojo::UserAgent for proxying async req.",' >> META_new.json
 	$(NOECHO) $(ECHO) '   "author" : [' >> META_new.json
 	$(NOECHO) $(ECHO) '      "ÐÐ¸ÑÐ°Ð¸Ð» Ð§Ðµ (Mikhail Che) <mche[-at-]cpan.org>"' >> META_new.json
 	$(NOECHO) $(ECHO) '   ],' >> META_new.json
@@ -561,7 +561,7 @@ metafile : create_distdir
 	$(NOECHO) $(ECHO) '      }' >> META_new.json
 	$(NOECHO) $(ECHO) '   },' >> META_new.json
 	$(NOECHO) $(ECHO) '   "release_status" : "stable",' >> META_new.json
-	$(NOECHO) $(ECHO) '   "version" : "0.01",' >> META_new.json
+	$(NOECHO) $(ECHO) '   "version" : "0.02",' >> META_new.json
 	$(NOECHO) $(ECHO) '   "x_serialization_backend" : "JSON::PP version 2.27300"' >> META_new.json
 	$(NOECHO) $(ECHO) '}' >> META_new.json
 	-$(NOECHO) $(MV) META_new.json $(DISTVNAME)/META.json
@@ -864,7 +864,7 @@ testdb_static :: testdb_dynamic
 # Creates a PPD (Perl Package Description) for a binary distribution.
 ppd :
 	$(NOECHO) $(ECHO) '<SOFTPKG NAME="$(DISTNAME)" VERSION="$(VERSION)">' > $(DISTNAME).ppd
-	$(NOECHO) $(ECHO) '    <ABSTRACT>Like (idea) Mojo::Pg for mojo user agent</ABSTRACT>' >> $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '    <ABSTRACT>Mojo::UserAgent for proxying async req.</ABSTRACT>' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '    <AUTHOR>ÐÐ¸ÑÐ°Ð¸Ð» Ð§Ðµ (Mikhail Che) &lt;mche[-at-]cpan.org&gt;</AUTHOR>' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '    <IMPLEMENTATION>' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '        <PERLCORE VERSION="5,006,0,0" />' >> $(DISTNAME).ppd

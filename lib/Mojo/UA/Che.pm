@@ -28,9 +28,9 @@ has max_queque => 0; # 0 - неограниченное количество а�
 
 #~ has ua_class => 'Mojo::UA::Che::UA';
 
-has [qw'debug proxy_module proxy cookie_ignore'];
+has [qw'debug proxy_module proxy_module_has proxy cookie_ignore'];
 
-has proxy_module_has => sub { {max_try => 3} };# опции для new proxy_module
+#~ has _proxy_module_has => sub { {max_try => 3} };# опции для new proxy_module
 has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; load_class($self->proxy_module)->new(%{$self->proxy_module_has})};
 
 has proxy_not => sub {[]};
@@ -41,6 +41,12 @@ has proxy_not => sub {[]};
   #~ return $self->ua_class->new(ua => $self->dequeue, top => $self, max_try => $self->max_try);
   
 #~ }
+
+my $pkg = __PACKAGE__;
+
+sub new {
+  shift->SUPER::new(@_);
+}
 
 sub request {
   my $self = shift;
@@ -155,7 +161,7 @@ sub mojo_ua {
   $ua->proxy->not($self->proxy_not)
     if $self->proxy_not;
   
-  $ua->{_ua_che} = $self;
+  $ua->{$pkg} = $self;
   
   return $ua;
 }
@@ -213,7 +219,7 @@ sub load_class {
 
 sub Mojo::UserAgent::DESTROY000 {
   my $self = shift;
-  my $che = $self->{_ua_che};
+  my $che = $self->{$pkg};
   $che->debug || 1 && say STDERR "DESTROY: $self";
   no warnings;
   eval {$che->enqueue($self)};

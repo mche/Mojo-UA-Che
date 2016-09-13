@@ -4,9 +4,9 @@ binmode(STDERR, ':utf8');
 use Test::More;
 use Mojo::UA::Che;
 
-my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', max_try=>5);
+my $ua =  Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has => {max_try=>5});
 my $base_url = 'https://metacpan.org/pod/';
-my @modules = qw(Scalar::Util Mojolicious Mojo::Pg Mojo::Pg::Che DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
+my @modules = qw(Scalar::Util Mojolicious Mojo::Pg Test::More DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
 my $limit = 3;
 my $total = @modules;
 

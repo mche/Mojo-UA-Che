@@ -5,31 +5,35 @@ use Test::More;
 use Mojo::UA::Che;
 
 my $base_url = 'http://mojolicious.org/perldoc/';
+my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI);
 #~ my $dom_select = '#NAME ~ p';
 my $dom_select = 'head title';
 my $limit = 3;
 my $delay = Mojo::IOLoop->delay;
 $delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
+my @done = ();
 
 my $test = sub {
   my $che = shift;
-  my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI);
   my $total = @modules;
   my @ua = $che->proxy_handler ?
       $che->dequeue($limit)
-    : (($che->dequeue) x $limit)
+    : (($che->dequeue) x $limit);
   #~ $delay->data(ua=>\@ua);
   my @done = ();
   start($_) for @ua;
   $delay->wait;
   say STDERR 'Module ', $_ for @done;
 
-  $che->enqueque(@ua);
+  $che->enqueue(@ua);
 
   is scalar @done, $total, 'proxying good';
 };
 
 subtest 'Proxying' => $test, Mojo::UA::Che->new(proxy_module=>'Mojo::UA::Che::Proxy', proxy_module_has=>{max_try=>5}, debug=>1);
+
+@modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI);
+@done = ();
 
 subtest 'Normal' => $test, Mojo::UA::Che->new();
 
@@ -42,8 +46,7 @@ sub start {
   $ua->get( $url => sub {
     $end->();
     my ($mua, $tx) = @_;
-    my $res = $ua->process_tx($tx, $mua);
-    #~ $end->();
+    my $res = $ua->{'Mojo::UA::Che'}->process_tx($tx, $mua);
     say STDERR "AGAIN: [$module] $res"
       and return start($mua, $module)
       unless  ref $res || $res =~ /404/;
