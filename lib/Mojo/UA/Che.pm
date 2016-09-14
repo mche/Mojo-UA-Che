@@ -5,6 +5,7 @@ no warnings qw(redefine);
 use Mojo::Base -base;
 #~ use Mojo::UA::Che::UA;
 use Mojo::UserAgent;
+use Mojo::Util qw(monkey_patch);
 
 
 has ua_names => sub {[
@@ -163,14 +164,15 @@ sub mojo_ua {
 sub on_start_tx {
   my ($self, $ua, $tx) = @_;
   return unless $self->proxy_handler;
-  say STDERR "START TX [$tx]";
-  $self->prepare_tx($tx);
+  say STDERR "START TX [$tx]\t", $tx->req->url, "\t tried: $tx->{_tried}";
+  $self->prepare_proxy($tx);
   $tx->on(finish => sub {$self->on_finish_tx(@_)});
 }
 
-sub prepare_tx {#  set proxy
+sub prepare_proxy {#  set proxy
   my ($self, $tx) = @_;
-  return $tx # уже установлен прокси
+  say STDERR "PROXY EXISTS ", $tx->req->proxy
+    and return $tx # уже установлен прокси
     if $tx->req->proxy;
   my $proxy = $self->proxy_handler->use_proxy;
   $self->proxy_handler->http($proxy)->https($proxy)->prepare($tx);
@@ -184,12 +186,13 @@ sub on_finish_tx {
   my $handler = $self->proxy_handler
     or return;
   my $proxy = $tx->req->proxy
-    or say STDERR "FINISH NO PROXY"
+    or say STDERR "FINISH NO PROXY?"
     and return;
   # заглянуть в ответ
   my $res = $self->process_tx($tx);
   say STDERR "GOOD PROXY [$proxy]"
-    and return $self->good_proxy($proxy)
+    and $self->good_proxy($proxy)
+    and return 
     if ref $res || $res =~ m'404';
     
   if ($res =~ m'429|403|отказано|premature|Auth'i) {
@@ -198,14 +201,15 @@ sub on_finish_tx {
       if ++$tx->{_failed} > $self->proxy_max_fail;
     # смена прокси
     $tx->req->proxy(undef);# сбросить для смены прокси
-    return $tx->resume;
+    #~ return $self->start($tx->resume;
   }
   
-  return # стоп попытки прокси
-    unless defined $tx->{_tried} && $tx->{_tried}++ < $self->proxy_max_try;
+  $tx->req->proxy(undef)# сбросить для смены прокси
+    if $tx->{_tried} && $tx->{_tried}++ > $self->proxy_max_try;
     
   say STDERR "NEXT TRY[$tx->{_tried}] for proxy [$proxy] $res";
-  $tx->resume;
+  #~ $tx->resume;
+  $self->start($tx, sub {shift; $self->on_finish_tx(@_)});
 }
 
 sub change_proxy {# shortcut
@@ -265,8 +269,10 @@ sub  AUTOLOAD {
   my $self = shift;
   my $ua = $self->ua;
   
-  return $ua->$method(@_)
-    if $ua->can($method);
+  if ($ua->can($method)) {
+    monkey_patch(__PACKAGE__, $method, sub { shift->ua->$method(@_); });
+    return $self->$method(@_);
+  }
   
   die sprintf qq{Can't locate autoloaded object method "%s" (%s) via package "%s" at %s line %s.\n}, $method, $AUTOLOAD, ref $self, (caller)[1,2];
   
