@@ -172,21 +172,21 @@ sub process_tx {
 sub on_start_tx {
   my ($self, $ua, $tx) = @_;
   return unless $self->proxy_handler;
-  $tx->{_tried} ||= 0;
-  say STDERR "START TX [$tx]\t", $tx->req->url, "\t try: $tx->{_tried}";
+  $tx->{proxy_tried} ||= 0;
+  say STDERR "START TX [$tx]\t", $tx->req->url, "\t try: $tx->{proxy_tried}";
   $self->prepare_proxy($tx);
-  $tx->on(finish => sub {$self->on_finish_tx(@_)});
+  #~ $tx->on(finish => sub {$self->on_finish_tx(@_)});
 }
 
 sub prepare_proxy {#  set proxy
   my ($self, $tx) = @_;
   say STDERR "PROXY EXISTS ", $tx->req->proxy
     and return $tx # уже установлен прокси
-    if $tx->req->proxy && ! $tx->{_change_proxy};
+    if $tx->req->proxy;# && ! $tx->{_change_proxy};
   my $proxy = $self->proxy_handler->use_proxy;
   $self->proxy_handler->http($proxy)->https($proxy)->prepare($tx);
   say STDERR "SET PROXY [$proxy]";
-  delete $tx->{_change_proxy};
+  #~ delete $tx->{_change_proxy};
   return $tx;
 }
 
@@ -207,14 +207,14 @@ sub on_finish_tx {
   if ($res =~ m'429|403|отказано|premature|Auth'i) {
     say STDERR "Fail proxy [$proxy] $res";
     return $tx
-      if ++$tx->{_failed} > $self->proxy_max_fail;
-    $tx->{_tried} = $self->proxy_max_try+1;
+      if ++$tx->{proxy_failed} > $self->proxy_max_fail;
+    #~ $tx->{_tried} = $self->proxy_max_try+1;
   }
   
-  if (defined $tx->{_tried} && $tx->{_tried}++ > $self->proxy_max_try) {# смена прокси
+  if (defined $tx->{proxy_tried} && $tx->{proxy_tried}++ > $self->proxy_max_try) {# смена прокси
     #~ $tx->req->proxy($proxy = 'need_change');# сбросить для смены прокси
-    $tx->{_change_proxy}=1;
-    $tx->{_tried}=0;
+    #~ $tx->{_change_proxy}=1;
+    $tx->{proxy_tried}=0;
     #~ $proxy = 'reset';
   }
   
@@ -237,6 +237,14 @@ sub good_proxy {# shortcut
   my $handler = $self->proxy_handler
     or return;
   $handler->good_proxy(@_);
+  
+}
+
+sub bad_proxy {# shortcut
+  my ($self,) = shift;
+  my $handler = $self->proxy_handler
+    or return;
+  $handler->bad_proxy(@_);
   
 }
 

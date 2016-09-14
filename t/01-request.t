@@ -13,7 +13,7 @@ my $limit = 1;
 my $delay = Mojo::IOLoop->delay;
 $delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
 my $che = Mojo::UA::Che->new(proxy_module_has=>{debug=>1,}, debug=>1, cookie_ignore=>1);
-$delay->data(ua=>$che->ua);
+#~ $delay->data(ua=>$che->ua);
 my @done = ();
 
 sub test {
