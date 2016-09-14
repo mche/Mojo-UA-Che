@@ -119,7 +119,7 @@ sub batch {
 }
 
 sub process_tx {
-  my ($self, $tx, $ua) = @_;
+  my ($self, $tx) = @_;
   my $res = $tx->res;
   
   if ($tx->error) {
@@ -164,7 +164,8 @@ sub mojo_ua {
 sub on_start_tx {
   my ($self, $ua, $tx) = @_;
   return unless $self->proxy_handler;
-  say STDERR "START TX [$tx]\t", $tx->req->url, "\t tried: $tx->{_tried}";
+  $tx->{_tried} ||= 0;
+  say STDERR "START TX [$tx]\t", $tx->req->url, "\t try: $tx->{_tried}";
   $self->prepare_proxy($tx);
   $tx->on(finish => sub {$self->on_finish_tx(@_)});
 }
@@ -173,11 +174,11 @@ sub prepare_proxy {#  set proxy
   my ($self, $tx) = @_;
   say STDERR "PROXY EXISTS ", $tx->req->proxy
     and return $tx # уже установлен прокси
-    if $tx->req->proxy;
+    if $tx->req->proxy && ! $tx->{_change_proxy};
   my $proxy = $self->proxy_handler->use_proxy;
   $self->proxy_handler->http($proxy)->https($proxy)->prepare($tx);
-  $tx->{_tried}=0;
   say STDERR "SET PROXY [$proxy]";
+  delete $tx->{_change_proxy};
   return $tx;
 }
 
@@ -190,7 +191,7 @@ sub on_finish_tx {
     and return;
   # заглянуть в ответ
   my $res = $self->process_tx($tx);
-  say STDERR "GOOD PROXY [$proxy]"
+  say STDERR "GOOD PROXY [$proxy] for response $res"
     and $self->good_proxy($proxy)
     and return 
     if ref $res || $res =~ m'404';
@@ -199,16 +200,20 @@ sub on_finish_tx {
     say STDERR "Fail proxy [$proxy] $res";
     return 
       if ++$tx->{_failed} > $self->proxy_max_fail;
-    # смена прокси
-    $tx->req->proxy(undef);# сбросить для смены прокси
-    #~ return $self->start($tx->resume;
+    $tx->{_tried} = $self->proxy_max_try+1;
   }
   
-  $tx->req->proxy(undef)# сбросить для смены прокси
-    if $tx->{_tried} && $tx->{_tried}++ > $self->proxy_max_try;
-    
-  say STDERR "NEXT TRY[$tx->{_tried}] for proxy [$proxy] $res";
+  if (defined $tx->{_tried} && $tx->{_tried}++ > $self->proxy_max_try) {# смена прокси
+    #~ $tx->req->proxy($proxy = 'need_change');# сбросить для смены прокси
+    $tx->{_change_proxy}=1;
+    $tx->{_tried}=0;
+    #~ $proxy = 'reset';
+  }
+  
+  
+  say STDERR "NEXT TRY[$tx] for proxy [$proxy] $res";
   #~ $tx->resume;
+  $tx->res(Mojo::Message::Response->new);#
   $self->start($tx, sub {shift; $self->on_finish_tx(@_)});
 }
 
@@ -271,6 +276,7 @@ sub  AUTOLOAD {
   
   if ($ua->can($method)) {
     monkey_patch(__PACKAGE__, $method, sub { shift->ua->$method(@_); });
+    say STDERR "patching for Mojo::UserAgent->$method";
     return $self->$method(@_);
   }
   
