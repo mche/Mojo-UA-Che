@@ -21,7 +21,9 @@ has ua_names => sub {[
   
 ]};
 
-has [qw(ua ua_name)];
+has [qw(ua_name)];
+
+has ua => sub {shift->mojo_ua};
 
 has mojo_ua_has => sub { {} }; # опции для Mojo::UA->new
 
@@ -49,9 +51,39 @@ has proxy_not => sub {[]};
 
 my $pkg = __PACKAGE__;
 
-sub new {
-  my $self = shift->SUPER::new(@_);
-  $self->ua($self->mojo_ua);
+# Common HTTP methods
+#~ monkey_patch($pkg, $_, sub {shift->ua->$_(@_)})
+  #~ for qw(delete get head options patch post put);# {}
+
+#~ sub new {
+  #~ my $self = shift->SUPER::new(@_);
+  #~ $self->ua($self->mojo_ua);
+#~ }
+
+sub mojo_ua {
+  my $self = shift;
+  my $ua = Mojo::UserAgent->new(%{$self->mojo_ua_has});
+  # Ignore all cookies
+  $ua->cookie_jar->ignore(sub { 1 })
+    if $self->cookie_ignore;
+  # Change name of user agent
+  my $ua_names = $self->ua_names;
+  $ua->transactor->name($self->ua_name || $ua_names->[rand @$ua_names]);
+  
+  $ua->proxy($self->proxy_handler)
+    if $self->proxy_handler;
+  
+  if ($self->proxy) { $ua->proxy->http($self->proxy)->https($self->proxy); }
+  #~ else { $self->change_proxy($ua); }
+  
+  $ua->proxy->not($self->proxy_not)
+    if $self->proxy_not;
+  
+  #~ $ua->{$pkg} = $self;
+  
+  $ua->on(start=>sub {$self->on_start_tx(@_)});
+  
+  return $ua;
 }
 
 sub request {
@@ -135,31 +167,7 @@ sub process_tx {
 }
 
 
-sub mojo_ua {
-  my $self = shift;
-  my $ua = Mojo::UserAgent->new(%{$self->mojo_ua_has});
-  # Ignore all cookies
-  $ua->cookie_jar->ignore(sub { 1 })
-    if $self->cookie_ignore;
-  # Change name of user agent
-  my $ua_names = $self->ua_names;
-  $ua->transactor->name($self->ua_name || $ua_names->[rand @$ua_names]);
-  
-  $ua->proxy($self->proxy_handler)
-    if $self->proxy_handler;
-  
-  if ($self->proxy) { $ua->proxy->http($self->proxy)->https($self->proxy); }
-  #~ else { $self->change_proxy($ua); }
-  
-  $ua->proxy->not($self->proxy_not)
-    if $self->proxy_not;
-  
-  #~ $ua->{$pkg} = $self;
-  
-  $ua->on(start=>sub {$self->on_start_tx(@_)});
-  
-  return $ua;
-}
+
 
 sub on_start_tx {
   my ($self, $ua, $tx) = @_;
