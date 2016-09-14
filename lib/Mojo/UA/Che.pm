@@ -36,8 +36,8 @@ has cookie_ignore => 0;
 
 has proxy_module => 'Mojo::UA::Che::Proxy';
 has proxy_module_has => sub { {} };
-has proxy_max_try => 5;
-has proxy_max_fail => 50;
+has proxy_max_try => 3;
+has proxy_max_fail => 10;
 has proxy_handler => sub {my $self = shift; return unless $self->proxy_module; load_class($self->proxy_module)->new(%{$self->proxy_module_has})};
 has proxy_not => sub {[]};
 
@@ -186,8 +186,8 @@ sub on_start_tx {
 
 sub prepare_proxy {#  set proxy
   my ($self, $ua, $tx) = @_;
-  say STDERR "PROXY EXISTS ", $tx->req->proxy
-    and return $tx # уже установлен прокси
+  #~ say STDERR "PROXY EXISTS ", $tx->req->proxy
+  return $tx # уже установлен прокси
     if $tx->req->proxy;
   #~ $tx->{proxy_tried} ||= 0;
   my $proxy = $self->proxy_handler->use_proxy;
@@ -203,7 +203,7 @@ sub on_finish_tx {
   my $handler = $self->proxy_handler
     or return $tx;
   my $proxy = $tx->req->proxy
-    or say STDERR "FINISH NO PROXY?"
+    or say STDERR "FINISH TX HAS NO PROXY?"
     and return $tx;
   # заглянуть в ответ
   my $res = $self->process_tx($tx);
@@ -213,18 +213,20 @@ sub on_finish_tx {
     if ref $res || $res =~ m'404';
     
   if ($res =~ m'429|403|отказано|premature|Auth'i) {
-    say STDERR "Fail proxy [$proxy] $res";
+    say STDERR "FAIL PROXY [$proxy] $res";
     return $tx
       if ++$ua->proxy->{proxy_failed} > $self->proxy_max_fail;
-    $ua->proxy->{proxy_tried} = $self->proxy_max_try;# чтобы сменить
+    $ua->proxy->{proxy_tried} = $self->proxy_max_try + 1;# чтобы сменить
   }
   
-  if (defined $ua->proxy->{proxy_tried} && $ua->proxy->{proxy_tried}++ > $self->proxy_max_try) {# смена прокси
+  if (defined $ua->proxy->{proxy_tried} && $ua->proxy->{proxy_tried}++ >= $self->proxy_max_try) {# смена прокси
+    say STDERR "RESET BAD PROXY $proxy";
     $ua->proxy->https(undef)->http(undef);
   }
   
   
   say STDERR $ua->proxy->{proxy_tried}, " NEXT TRY proxy [$proxy] $res";
+  return $tx;
   #~ $tx->resume;
   #~ $tx->res(Mojo::Message::Response->new);#
   #~ return $self->ua->start($tx, sub {1;});# sub {shift; say STDERR "FINISH TRY TX:", $_[0],; $tx = $self->on_finish_tx($_[0]);});

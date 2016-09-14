@@ -6,10 +6,10 @@ use Mojo::UA::Che;
 
 
 my $base_url = 'http://mojolicious.org/perldoc/';
-my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI);
+my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI utf8 strict);
 #~ my $dom_select = '#NAME ~ p';
 my $dom_select = 'head title';
-my $limit = 1;
+my $limit = 3;
 my $delay = Mojo::IOLoop->delay;
 $delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
 my @done = ();
@@ -32,7 +32,7 @@ sub test {
   
 }
 
-subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module_has=>{max_try=>5, debug=>1,}, debug=>1, cookie_ignore=>1);
+subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module_has=>{max_try=>2, debug=>1,}, debug=>1, cookie_ignore=>1);
 
 #~ pass 'proxying';
 
