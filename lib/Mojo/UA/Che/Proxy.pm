@@ -16,7 +16,7 @@ has ua => sub {
   return $ua;
 };
 
-has max_try => 3; # цикл попыток (для смены прокси)
+#~ has max_try => 3; # цикл попыток (для смены прокси)
 
 has proxy_url => 'http://hideme.ru/proxy-list/?type=45#list';
 has check_url => '';
@@ -68,31 +68,31 @@ sub check_proxy {
   #~ $res->code;
 }
 
-sub change_proxy {
-  my ($self, $ua, $proxy) = @_;
-  my $ua_proxy = $ua->proxy;
-  $proxy ||= $ua_proxy->https || $ua_proxy->http;
+#~ sub change_proxy {
+  #~ my ($self, $ua, $proxy) = @_;
+  #~ my $ua_proxy = $ua->proxy;
+  #~ $proxy ||= $ua_proxy->https || $ua_proxy->http;
   
-  ($self->debug && say STDERR "NEXT TRY[$ua_proxy->{_tried}] proxy[$proxy] for [$ua]") || 1
-    and return $proxy
-      if $proxy && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
+  #~ ($self->debug && say STDERR "NEXT TRY[$ua_proxy->{_tried}] proxy[$proxy] for [$ua]") || 1
+    #~ and return $proxy
+      #~ if $proxy && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
   
-  $self->bad_proxy($proxy)
-    if $proxy;
+  #~ $self->bad_proxy($proxy)
+    #~ if $proxy;
   
-  unless ($proxy = $self->use_proxy) {
-    $ua_proxy->http(undef)->https(undef);
-    $ua_proxy->{_tried} = 0;
-    return undef;
-  }
+  #~ unless ($proxy = $self->use_proxy) {
+    #~ $ua_proxy->http(undef)->https(undef);
+    #~ $ua_proxy->{_tried} = 0;
+    #~ return undef;
+  #~ }
   
-  $ua_proxy->http($proxy)->https($proxy)
-    and $self->debug && say STDERR "SET PROXY [$proxy]";
+  #~ $ua_proxy->http($proxy)->https($proxy)
+    #~ and $self->debug && say STDERR "SET PROXY [$proxy]";
   
-  $ua_proxy->{_tried} = 0;
+  #~ $ua_proxy->{_tried} = 0;
   
-  return $proxy;
-}
+  #~ return $proxy;
+#~ }
 
 sub good_proxy {# save or shift
   my ($self, $proxy) = @_;

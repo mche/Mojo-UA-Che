@@ -1,5 +1,5 @@
 package Mojo::UA::Che::Proxy;
-use Mojo::Base -base;
+use Mojo::Base 'Mojo::UserAgent::Proxy';
 use Mojo::UserAgent;
 
 has ua_has => sub { {} };
@@ -96,11 +96,12 @@ sub change_proxy {
 
 sub good_proxy {# save or shift
   my ($self, $proxy) = @_;
-  my $good = $self->{good_proxy} ||= [];
+  my $good = $self->{good_proxy} ||= {};
   ($self->debug && say STDERR "SAVE GOOD PROXY: [$proxy]") || 1
-    and return push @$good, $proxy
+    and return $good->{$proxy}++#push @$good, $proxy
       if $proxy;
-  $proxy = shift @$good;
+  #~ $proxy = shift @$good;
+  $proxy = delete $good->{ (keys %$good)[0] || '' };
   $self->debug && $proxy && say STDERR "USE GOOD PROXY: [$proxy]";
   return $proxy;
 }

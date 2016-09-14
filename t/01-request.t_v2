@@ -12,27 +12,54 @@ my $dom_select = 'head title';
 my $limit = 1;
 my $delay = Mojo::IOLoop->delay;
 $delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
+my $che = Mojo::UA::Che->new(proxy_module_has=>{debug=>1,}, debug=>1, cookie_ignore=>1);
+#~ $delay->data(ua=>$che->ua);
 my @done = ();
 
+=pod
+#~ use Mojo::UserAgent;
+my $ua = Mojo::UserAgent->new();
+$ua->on(start=> sub {
+  my ($self, $tx) = @_;
+  say STDERR "START TX $tx";
+  $tx->{_count} ||= 0;
+  #~ $tx->on(request => sub {say STDERR "request is ready and needs to be handled"; 1;});
+  $tx->once(finish=> sub {
+    my $tx2 = shift;
+    say STDERR "FINISH TX", $tx->{_count}++, $tx->success, $tx2->success;
+    #~ $tx2->res(Mojo::Message::Response->new);#
+    $ua->start($tx2, sub {shift; $tx=shift;})
+      if $tx->{_count} < 5;
+    #~ $tx2->resume;
+  });
+  #~ $tx;
+  1;
+});
+
+
+$ua->get($base_url, sub {
+  my ($ua, $tx) = @_;
+  say STDERR 'DONE', $tx->{_count}, $tx->success;
+  
+});
+
+=cut
+
+
 sub test {
-  my $che = shift;
+  #~ my $che = shift;
   #~ say STDERR "DEBUG: ", $che->debug;
   my $total = @modules;
-  my @ua = $che->proxy_handler ?
-      $che->dequeue($limit)
-    : (($che->dequeue) x $limit);
   #~ $delay->data(ua=>\@ua);
-  start($_) for @ua;
+  start() for 1..$limit;
   $delay->wait;
   say STDERR 'Module ', $_ for @done;
-
-  $che->enqueue($che->proxy_handler ? @ua : $ua[0]);
 
   is scalar @done, $total, 'proxying good';
   
 }
 
-subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module_has=>{max_try=>5, debug=>1,}, debug=>1, cookie_ignore=>1);
+subtest 'Proxying' => \&test ;
 
 #~ pass 'proxying';
 
@@ -44,20 +71,18 @@ subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module_has=>{max_try=>5, 
 #~ pass 'normal';
 
 sub start {
-  my $ua = shift;# || $ua->dequeue;
+  #~ my $ua = shift;# || $ua->dequeue;
   my $module = shift() || shift @modules
     || return;
   my $url = $base_url.$module;
   my $end = $delay->begin;
-  $ua->get( $url => sub {
+  $che->get( $url => sub {
     $end->();
-    my ($mua, $tx) = @_;
-    my $res = $ua->{'Mojo::UA::Che'}->process_tx($tx, $mua);
-    say STDERR "AGAIN: [$module] $res"
-      and return start($mua, $module)
-      unless  ref $res || $res =~ /404/;
+    my ($ua, $tx) = @_;
+    my $res = $che->process_tx($tx,);
+    say STDERR "DONE ", $tx->req->url, "\t $res";
     push @done, process_res($res);
-    start($mua);
+    start();
     });
 }
 
