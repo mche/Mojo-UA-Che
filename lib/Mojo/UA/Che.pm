@@ -185,20 +185,20 @@ sub prepare_proxy {#  set proxy
 sub on_finish_tx {
   my ($self, $tx) = @_;
   my $handler = $self->proxy_handler
-    or return;
+    or return $tx;
   my $proxy = $tx->req->proxy
     or say STDERR "FINISH NO PROXY?"
-    and return;
+    and return $tx;
   # заглянуть в ответ
   my $res = $self->process_tx($tx);
   say STDERR "GOOD PROXY [$proxy] for response $res"
     and $self->good_proxy($proxy)
-    and return 
+    and return $tx
     if ref $res || $res =~ m'404';
     
   if ($res =~ m'429|403|отказано|premature|Auth'i) {
     say STDERR "Fail proxy [$proxy] $res";
-    return 
+    return $tx
       if ++$tx->{_failed} > $self->proxy_max_fail;
     $tx->{_tried} = $self->proxy_max_try+1;
   }
@@ -214,7 +214,7 @@ sub on_finish_tx {
   say STDERR "NEXT TRY[$tx] for proxy [$proxy] $res";
   #~ $tx->resume;
   $tx->res(Mojo::Message::Response->new);#
-  $self->start($tx, sub {shift; $self->on_finish_tx(@_)});
+  return $self->ua->start($tx, sub {shift; say STDERR "FINISH TRY TX:", $_[0],; $tx = $self->on_finish_tx($_[0]);});
 }
 
 sub change_proxy {# shortcut
