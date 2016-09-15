@@ -74,6 +74,7 @@ for my $method (qw(delete get head options patch post put)) {# Common HTTP metho
     $self->ua->start($tx, $finish_tx || $cb);
     
   };
+}
 
 #~ sub new {
   #~ my $self = shift->SUPER::new(@_);
@@ -101,94 +102,10 @@ sub mojo_ua {
     if $self->proxy_not;
   
   #~ $ua->{$pkg} = $self;
-  
   #~ $ua->on(start=>sub {$self->on_start_tx(@_)});
   
   return $ua;
 }
-
-sub request {
-  my $self = shift;
-  my $async = ref $_[-1] eq 'CODE';
-  my $ua = $self->dequeue;
-  my $meth = shift;
-  return $ua->$meth(@_)
-    if $async;
-  # Blocking
-  my $tx = $ua->$meth(@_);
-  my $res = $self->process_tx($tx, $ua);
-  #~ $self->process_res($res, $ua);
-  $self->enqueue($ua);
-  return $res;
-  #~ $self->ua->request(@_);
-  
-}
-
-sub batch {
-  my ($self, @batch) = @_; # список arrayrefs   ['get', @args], ['post', @args], ...
-  my $delay = Mojo::IOLoop->delay;
-  my @res = ();
-  my @ua = $self->proxy_handler ?
-      $self->dequeue(scalar @batch)
-    : (($self->dequeue) x @batch);
-  
-  $delay->data(ua =>\@ua);# копировать!!!
-  $delay->steps(
-  sub {
-    my ($delay) = @_;
-    for my $ua (@ua) {
-      my $data = shift @batch;
-      my $meth= shift @$data;
-      #~ warn $ua->ua, "->$meth(@$data)";
-      $ua->$meth(@$data, $delay->begin(0));
-    }
-  },
-  sub {
-    my $delay = shift;
-    my @ua;
-    while (my ($ua, $tx) = splice @_, 0, 2) {
-      my $res = $self->process_tx($tx, $ua);
-      #~ $self->process_res($res, $ua);
-      push @res, $res;
-      push @ua, $ua;
-    }
-    
-    if ($self->proxy_handler) {
-      $self->enqueue(@ua);
-    } else {
-      $self->enqueue($ua[0]);
-    }
-  },
-  
-  );
-  $delay->catch(sub {
-    my ($delay, $err) = @_;
-    warn "CATCH: ", $err;
-    $delay->emit(finish => 'failed');
-  });
-  
-  $delay->wait;
-  return @res;
-}
-
-sub process_tx {
-  my ($self, $tx) = @_;
-  my $res = $tx->res;
-  
-  if ($tx->error) {
-    my $err = $tx->error;
-    $res = $err->{code} || $err->{message} || 'unknown error';
-    utf8::decode($res);
-  }
-  
-  #~ $self->process_res($res, $tx);
-  
-  return $res;
-  
-}
-
-
-
 
 sub start_tx {
   my ($self, $tx) = @_;
@@ -241,6 +158,22 @@ sub finish_tx { # логика строгая
   }
   
   return undef; # повторить транзакцию!
+  
+}
+
+sub process_tx {
+  my ($self, $tx) = @_;
+  my $res = $tx->res;
+  
+  if ($tx->error) {
+    my $err = $tx->error;
+    $res = $err->{code} || $err->{message} || 'unknown error';
+    utf8::decode($res);
+  }
+  
+  #~ $self->process_res($res, $tx);
+  
+  return $res;
   
 }
 
