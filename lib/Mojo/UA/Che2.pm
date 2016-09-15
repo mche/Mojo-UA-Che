@@ -1,5 +1,5 @@
-package Mojo::UA::Che;
-no warnings qw(redefine);
+package Mojo::UA::Che2;
+#~ no warnings qw(redefine);
 #~ no warnings 'FATAL'=>'all';
 
 use Mojo::Base -base;
@@ -34,7 +34,7 @@ has debug => 0;
 has cookie_ignore => 0;
 
 has [qw'proxy '];
-has proxy_module => 'Mojo::UA::Che::Proxy';
+has proxy_module => 'Mojo::UA::Che::Proxy2';
 has proxy_module_has => sub { {} };
 has proxy_max_try => 5;
 has proxy_max_fail => 50;
@@ -55,6 +55,26 @@ my $pkg = __PACKAGE__;
 #~ monkey_patch($pkg, $_, sub {shift->ua->$_(@_)})
   #~ for qw(delete get head options patch post put);# {}
 
+# HEART OF MODULE
+for my $method (qw(delete get head options patch post put)) {# Common HTTP methods
+  monkey_patch __PACKAGE__, $method, sub {
+    my $self = shift;
+    my @args = @_;
+    my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
+    my $finish_tx = sub {
+      my ($ua, $tx) = @_;
+      return $self->$method(@args)
+        unless $self->finish_tx($tx);
+      return $ua->$cb($tx)
+        if $cb;
+      return $tx;
+    } if $self->proxy_handler;
+    my $tx = $self->ua->build_tx($method, @_);
+    $self->start_tx($tx);
+    $self->ua->start($tx, $finish_tx || $cb);
+    
+  };
+
 #~ sub new {
   #~ my $self = shift->SUPER::new(@_);
   #~ $self->ua($self->mojo_ua);
@@ -73,6 +93,7 @@ sub mojo_ua {
   $ua->proxy($self->proxy_handler)
     if $self->proxy_handler;
   
+  # Preset or permanent proxy
   if ($self->proxy) { $ua->proxy->http($self->proxy)->https($self->proxy); }
   #~ else { $self->change_proxy($ua); }
   
@@ -81,7 +102,7 @@ sub mojo_ua {
   
   #~ $ua->{$pkg} = $self;
   
-  $ua->on(start=>sub {$self->on_start_tx(@_)});
+  #~ $ua->on(start=>sub {$self->on_start_tx(@_)});
   
   return $ua;
 }
@@ -169,12 +190,12 @@ sub process_tx {
 
 
 
-sub on_start_tx {
-  my ($self, $ua, $tx) = @_;
+sub start_tx {
+  my ($self, $tx) = @_;
   return unless $self->proxy_handler;
   say STDERR "START TX [$tx]\t", $tx->req->url, "\t try: $tx->{proxy_tried}";
   $self->prepare_proxy($tx);
-  $tx->once(finish => sub {$self->on_finish_tx(@_)});
+  #~ $tx->once(finish => sub {$self->on_finish_tx(@_)});
 }
 
 sub prepare_proxy {#  set proxy
@@ -190,40 +211,37 @@ sub prepare_proxy {#  set proxy
   return $tx;
 }
 
-sub on_finish_tx {
+sub finish_tx { # логика строгая
+=pod
+Вернуть истину если транзакция хорошая
+Плохая транзакция по возвращенной false будет запущена заново:
+1) Еще попытки этого прокси.
+
+=cut
   my ($self, $tx) = @_;
-  my $handler = $self->proxy_handler
-    or return $tx;
+  #~ my $handler = $self->proxy_handler
+    #~ or return $tx;
   my $proxy = $tx->req->proxy
     or say STDERR "FINISH NO PROXY?"
     and return $tx;
   # заглянуть в ответ
-  my $res = $self->process_tx($tx);
+  my $res = $tx->{_res} = $self->process_tx($tx);
   say STDERR "GOOD PROXY [$proxy] for response $res"
     and $self->good_proxy($proxy)
     and return $tx
     if ref $res || $res =~ m'404';
-    
+  
   if ($res =~ m'429|403|отказано|premature|Auth'i) {
-    say STDERR "Fail proxy [$proxy] $res";
-    return $tx
-      if ++$tx->{proxy_failed} > $self->proxy_max_fail;
-    $tx->{proxy_tried} = $self->proxy_max_try;
+    say STDERR "FAIL PROXY [$proxy] $res";
+    $self->bad_proxy($proxy, $self->proxy_max_try);
+  } else {
+    say STDERR "BAD PROXY [$proxy] $res";
+    $self->bad_proxy($proxy,);
+    
   }
   
-  if (defined $tx->{proxy_tried} && $tx->{proxy_tried}++ > $self->proxy_max_try) {# смена прокси
-    #~ $tx->req->proxy($proxy = 'need_change');# сбросить для смены прокси
-    $tx->{change_proxy}=1;
-    $tx->{proxy_tried}=0;
-    #~ $proxy = 'reset';
-  }
+  return undef; # повторить транзакцию!
   
-  
-  say STDERR "NEXT TRY[$tx] for proxy [$proxy] $res";
-  #~ $tx->resume;
-  $tx->res(Mojo::Message::Response->new);#
-  return $self->ua->start($tx, sub {1;});# sub {shift; say STDERR "FINISH TRY TX:", $_[0],; $tx = $self->on_finish_tx($_[0]);});
-  #~ Mojo::IOLoop->is_running;
 }
 
 sub change_proxy {# shortcut
