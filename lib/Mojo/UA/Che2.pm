@@ -119,8 +119,8 @@ sub prepare_proxy {#  set proxy
   my ($self, $tx) = @_;
   say STDERR "PROXY EXISTS ", $tx->req->proxy
     and return $tx # уже установлен прокси
-    if $tx->req->proxy && ! delete $tx->{change_proxy};
-  $tx->{proxy_tried} ||= 0;
+    if $tx->req->proxy;# && ! delete $tx->{change_proxy};
+  #~ $tx->{proxy_tried} ||= 0;
   my $proxy = $self->proxy_handler->use_proxy;
   $self->proxy_handler->http($proxy)->https($proxy)->prepare($tx);
   say STDERR "SET PROXY [$proxy]";

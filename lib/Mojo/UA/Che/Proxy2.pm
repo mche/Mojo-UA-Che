@@ -22,6 +22,7 @@ has proxy_url => 'http://hideme.ru/proxy-list/?type=45#list';
 has check_url => '';
 
 has list => sub {[]};
+has good_proxy => sub { {} }; # фрмат записи 'полный прокси'=>[<последний запуск>, <количество фейлов>]
 
 has qw(debug);
 
@@ -47,10 +48,33 @@ sub use_proxy {
   my $proxy = $self->good_proxy ||  shift @{$self->list}
     || ($self->proxy_load && shift @{$self->list})
     || die "Не смог получить проксю";
-  #~ $self->render(json=>$r);
-  #~ $self->check_proxy($r);
   return 'socks://' . $proxy;
 }
+
+
+sub good_proxy {# save or shift
+  my ($self, $proxy) = @_;
+  my $g = $self->good_proxy;
+  if ($proxy) {
+    say STDERR "SAVE GOOD PROXY: [$proxy]"
+      if $self->debug;
+    $g->{$proxy} = [time, undef];
+  } elsif ($proxy = (sort {$g->{$b}[0] <=> $g->{$a}[0] && $g->{$b}[1] <=> $g->{$a}[1]} keys %$g)[0]) {
+    $g->{$proxy}[0] = time;
+    
+  }
+  say STDERR "USE GOOD PROXY: [$proxy]"
+    if $proxy && $self->debug;
+  return $proxy;
+}
+
+sub bad_proxy {
+  my ($self, $proxy) = @_;
+  $proxy = ( $proxy =~ /([\d\.]+:\d+)$/ )[0]
+    or return;
+  #~ $self->model->status_proxy('B', $proxy);
+}
+
 
 sub check_proxy {
   my ($self, $proxy) = @_;
@@ -68,7 +92,7 @@ sub check_proxy {
   #~ $res->code;
 }
 
-sub change_proxy {
+sub change_proxy00 {
   my ($self, $ua, $proxy) = @_;
   my $ua_proxy = $ua->proxy;
   $proxy ||= $ua_proxy->https || $ua_proxy->http;
@@ -94,31 +118,6 @@ sub change_proxy {
   return $proxy;
 }
 
-sub good_proxy {# save or shift
-  my ($self, $proxy) = @_;
-  my $good = $self->{good_proxy} ||= {};
-  ($self->debug && say STDERR "SAVE GOOD PROXY: [$proxy]") || 1
-    and return $good->{$proxy}++#push @$good, $proxy
-      if $proxy;
-  #~ $proxy = shift @$good;
-  $proxy = delete $good->{ (keys %$good)[0] || '' };
-  $self->debug && $proxy && say STDERR "USE GOOD PROXY: [$proxy]";
-  return $proxy;
-}
-
-#~ sub good_proxy {
-  #~ my ($self, $proxy) = @_;
-  #~ $proxy = ( $proxy =~ /([\d\.]+:\d+)$/ )[0]
-    #~ or return;
-  #~ $self->model->status_proxy('G', $proxy);
-#~ }
-
-sub bad_proxy {
-  my ($self, $proxy) = @_;
-  $proxy = ( $proxy =~ /([\d\.]+:\d+)$/ )[0]
-    or return;
-  #~ $self->model->status_proxy('B', $proxy);
-}
 
 
 
