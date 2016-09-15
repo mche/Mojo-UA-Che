@@ -22,7 +22,7 @@ has proxy_url => 'http://hideme.ru/proxy-list/?type=45#list';
 has check_url => '';
 
 has list => sub {[]};
-has good_proxy => sub { {} }; # фрмат записи 'полный прокси'=>[<последний запуск>, <количество фейлов>]
+has good_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 
 has qw(debug);
 
@@ -58,13 +58,15 @@ sub good_proxy {# save or shift
   if ($proxy) {
     say STDERR "SAVE GOOD PROXY: [$proxy]"
       if $self->debug;
-    $g->{$proxy} = [time, undef];
-  } elsif ($proxy = (sort {$g->{$a}[0] <=> $g->{$b}[0] && $g->{$b}[1] <=> $g->{$a}[1]} keys %$g)[0]) {
-    $g->{$proxy}[0] = time;
+    $g->{$proxy} = 0;
+    delete $self->{_using}{$proxy};
+  } elsif ($proxy = (sort {$g->{$b} <=> $g->{$a}} keys %$g)[0]) {
+    say STDERR "USE GOOD PROXY: [$proxy]"
+      if $self->debug;
+    $self->{_using}{$proxy} = delete $g->{$proxy};
     
   }
-  say STDERR "USE GOOD PROXY: [$proxy]"
-    if $proxy && $self->debug;
+  
   return $proxy;
 }
 
@@ -73,6 +75,10 @@ sub bad_proxy {
   return unless $proxy;
   $fail ||= 1;
   
+  my $total = delete $self->{_using}{$proxy}+$fail;
+  $self->good_proxy->{$proxy} = $total
+    if $total < $self->max_try;
+
 }
 
 
