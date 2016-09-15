@@ -64,13 +64,13 @@ for my $method (qw(delete get head options patch post put)) {# Common HTTP metho
     my $tx = $self->ua->build_tx($method, @_);
     my $finish_tx = sub {
       my ($ua, $_tx) = @_;
-      say STDERR "REBUILD TX on bad res", $_tx->req->url
+      say STDERR "REBUILD TX [$_tx] on bad response \t", $_tx->req->url
         and return $self->$method(@args)
         unless $self->finish_tx($_tx);
-      say STDERR "FINISH TX by callback"
+      say STDERR "FINISH TX [$_tx] by callback \t", $_tx->req->url
         and return $ua->$cb($_tx)
         if $cb;
-      say STDERR "PREV TX = NEXT TX";
+      say STDERR "PREV TX[$tx] = NEXT TX[$_tx]";
       $tx = $_tx;
     } if $self->proxy_handler;
     
@@ -114,7 +114,7 @@ sub mojo_ua {
 sub start_tx {
   my ($self, $tx) = @_;
   return unless $self->proxy_handler;
-  say STDERR "START TX [$tx]\t", $tx->req->url, "\t try: $tx->{proxy_tried}";
+  say STDERR "START TX [$tx]\t", $tx->req->url;
   $self->prepare_proxy($tx);
   #~ $tx->once(finish => sub {$self->on_finish_tx(@_)});
 }
@@ -127,7 +127,7 @@ sub prepare_proxy {#  set proxy
   #~ $tx->{proxy_tried} ||= 0;
   my $proxy = $self->proxy_handler->use_proxy;
   $self->proxy_handler->http($proxy)->https($proxy)->prepare($tx);
-  say STDERR "SET PROXY [$proxy]";
+  say STDERR "SET PROXY [$proxy] for ", $tx->req->url;
   #~ delete $tx->{_change_proxy};
   return $tx;
 }

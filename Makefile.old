@@ -192,21 +192,21 @@ PERL_ARCHIVE_AFTER =
 
 TO_INST_PM = README.pod \
 	lib/Mojo/UA/Che.pm \
+	lib/Mojo/UA/Che/000UA.pm \
 	lib/Mojo/UA/Che/Proxy.pm \
 	lib/Mojo/UA/Che/Proxy2.pm \
-	lib/Mojo/UA/Che/UA.pm \
 	lib/Mojo/UA/Che2.pm
 
 PM_TO_BLIB = README.pod \
 	$(INST_LIB)/Mojo/UA/README.pod \
 	lib/Mojo/UA/Che.pm \
 	blib/lib/Mojo/UA/Che.pm \
+	lib/Mojo/UA/Che/000UA.pm \
+	blib/lib/Mojo/UA/Che/000UA.pm \
 	lib/Mojo/UA/Che/Proxy.pm \
 	blib/lib/Mojo/UA/Che/Proxy.pm \
 	lib/Mojo/UA/Che/Proxy2.pm \
 	blib/lib/Mojo/UA/Che/Proxy2.pm \
-	lib/Mojo/UA/Che/UA.pm \
-	blib/lib/Mojo/UA/Che/UA.pm \
 	lib/Mojo/UA/Che2.pm \
 	blib/lib/Mojo/UA/Che2.pm
 
@@ -890,9 +890,9 @@ pm_to_blib : $(FIRST_MAKEFILE) $(TO_INST_PM)
 	$(NOECHO) $(ABSPERLRUN) -MExtUtils::Install -e 'pm_to_blib({@ARGV}, '\''$(INST_LIB)/auto'\'', q[$(PM_FILTER)], '\''$(PERM_DIR)'\'')' -- \
 	  README.pod $(INST_LIB)/Mojo/UA/README.pod \
 	  lib/Mojo/UA/Che.pm blib/lib/Mojo/UA/Che.pm \
+	  lib/Mojo/UA/Che/000UA.pm blib/lib/Mojo/UA/Che/000UA.pm \
 	  lib/Mojo/UA/Che/Proxy.pm blib/lib/Mojo/UA/Che/Proxy.pm \
 	  lib/Mojo/UA/Che/Proxy2.pm blib/lib/Mojo/UA/Che/Proxy2.pm \
-	  lib/Mojo/UA/Che/UA.pm blib/lib/Mojo/UA/Che/UA.pm \
 	  lib/Mojo/UA/Che2.pm blib/lib/Mojo/UA/Che2.pm 
 	$(NOECHO) $(TOUCH) pm_to_blib
 

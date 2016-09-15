@@ -1,4 +1,4 @@
-package Mojo::UA::Che::Proxy;
+package Mojo::UA::Che::Proxy2;
 use Mojo::Base 'Mojo::UserAgent::Proxy';
 use Mojo::UserAgent;
 
@@ -22,7 +22,7 @@ has proxy_url => 'http://hideme.ru/proxy-list/?type=45#list';
 has check_url => '';
 
 has list => sub {[]};
-has good_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
+has _good_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 has using_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 
 has qw(debug);
@@ -46,7 +46,10 @@ sub proxy_load {# загрузка списка
 
 sub use_proxy {
   my $self = shift;
-  my $proxy = $self->good_proxy ||  shift @{$self->list}
+  my $proxy = $self->good_proxy;
+  return $proxy
+    if $proxy;
+  $proxy = shift @{$self->list}
     || ($self->proxy_load && shift @{$self->list})
     || die "Не смог получить проксю";
   return 'socks://' . $proxy;
@@ -55,14 +58,14 @@ sub use_proxy {
 
 sub good_proxy {# save or shift
   my ($self, $proxy) = @_;
-  my $g = $self->good_proxy;
+  my $g = $self->_good_proxy;
   if ($proxy) {
     say STDERR "SAVE GOOD PROXY: [$proxy]"
       if $self->debug;
     $g->{$proxy} = 0;
     delete $self->using_proxy->{$proxy};
   } elsif ($proxy = (sort {$g->{$b} <=> $g->{$a}} keys %$g)[0]) {
-    say STDERR "USE GOOD PROXY: [$proxy]"
+    say STDERR "USE PROXY: [$proxy]"
       if $self->debug;
     $self->using_proxy->{$proxy} = delete $g->{$proxy};
     
@@ -77,8 +80,8 @@ sub bad_proxy {
   $fail ||= 1;
   
   my $total = (delete $self->using_proxy->{$proxy} // 0)+$fail;
-  say STDERR "SAVE BAD PROXY[$proxy] FOR RETRY"
-    and $self->good_proxy->{$proxy} = $total
+  say STDERR "SAVE BAD PROXY[$proxy] FOR RETRY ", $total, '<', $self->max_try,
+    and $self->_good_proxy->{$proxy} = $total
     if $total < $self->max_try;
 
 }
