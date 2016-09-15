@@ -59,7 +59,7 @@ sub good_proxy {# save or shift
     say STDERR "SAVE GOOD PROXY: [$proxy]"
       if $self->debug;
     $g->{$proxy} = [time, undef];
-  } elsif ($proxy = (sort {$g->{$b}[0] <=> $g->{$a}[0] && $g->{$b}[1] <=> $g->{$a}[1]} keys %$g)[0]) {
+  } elsif ($proxy = (sort {$g->{$a}[0] <=> $g->{$b}[0] && $g->{$b}[1] <=> $g->{$a}[1]} keys %$g)[0]) {
     $g->{$proxy}[0] = time;
     
   }
@@ -69,10 +69,10 @@ sub good_proxy {# save or shift
 }
 
 sub bad_proxy {
-  my ($self, $proxy) = @_;
-  $proxy = ( $proxy =~ /([\d\.]+:\d+)$/ )[0]
-    or return;
-  #~ $self->model->status_proxy('B', $proxy);
+  my ($self, $proxy, $fail) = @_;
+  return unless $proxy;
+  $fail ||= 1;
+  
 }
 
 
