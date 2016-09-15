@@ -64,13 +64,13 @@ for my $method (qw(delete get head options patch post put)) {# Common HTTP metho
     my $tx = $self->ua->build_tx($method, @_);
     my $finish_tx = sub {
       my ($ua, $_tx) = @_;
-      say STDERR "REBUILD TX [$_tx] on bad response \t", $_tx->req->url
+      $self->debug_stderr( "REBUILD TX [$_tx] on bad response \t", $_tx->req->url)
         and return $self->$method(@args)
         unless $self->finish_tx($_tx);
-      say STDERR "FINISH TX [$_tx] by callback \t", $_tx->req->url
+      $self->debug_stderr( "FINISH TX [$_tx] by callback \t", $_tx->req->url)
         and return $ua->$cb($_tx)
         if $cb;
-      say STDERR "PREV TX[$tx] = NEXT TX[$_tx]";
+      $self->debug_stderr( "PREV TX[$tx] = NEXT TX[$_tx]");
       $tx = $_tx;
     } if $self->proxy_handler;
     
@@ -114,20 +114,20 @@ sub mojo_ua {
 sub start_tx {
   my ($self, $tx) = @_;
   return unless $self->proxy_handler;
-  say STDERR "START TX [$tx]\t", $tx->req->url;
+  $self->debug_stderr( "START TX [$tx]\t", $tx->req->url);
   $self->prepare_proxy($tx);
   #~ $tx->once(finish => sub {$self->on_finish_tx(@_)});
 }
 
 sub prepare_proxy {#  set proxy
   my ($self, $tx) = @_;
-  say STDERR "PROXY EXISTS ", $tx->req->proxy
+  $self->debug_stderr( "PROXY EXISTS ", $tx->req->proxy)
     and return $tx # уже установлен прокси
     if $tx->req->proxy;# && ! delete $tx->{change_proxy};
   #~ $tx->{proxy_tried} ||= 0;
   my $proxy = $self->proxy_handler->use_proxy;
   $self->proxy_handler->http($proxy)->https($proxy)->prepare($tx);
-  say STDERR "SET PROXY [$proxy] for ", $tx->req->url;
+  $self->debug_stderr( "SET PROXY [$proxy] for ", $tx->req->url);
   #~ delete $tx->{_change_proxy};
   return $tx;
 }
@@ -143,20 +143,20 @@ sub finish_tx { # логика строгая
   #~ my $handler = $self->proxy_handler
     #~ or return $tx;
   my $proxy = $tx->req->proxy
-    or say STDERR "FINISH NO PROXY?"
+    or $self->debug_stderr( "FINISH NO PROXY?")
     and return $tx;
   # заглянуть в ответ
   my $res = $tx->{_res} = $self->process_tx($tx);
-  say STDERR "GOOD PROXY [$proxy] for response $res"
+  $self->debug_stderr( "GOOD PROXY [$proxy] for response $res")
     and $self->good_proxy($proxy)
     and return $tx
     if ref $res || $res =~ m'404';
   
   if ($res =~ m'429|403|отказано|premature|Auth'i) {
-    say STDERR "FAIL PROXY [$proxy] $res";
+    $self->debug_stderr( "FAIL PROXY [$proxy] $res");
     $self->bad_proxy($proxy, $self->proxy_max_try);
   } else {
-    say STDERR "BAD PROXY [$proxy] $res";
+    $self->debug_stderr( "BAD PROXY [$proxy] $res");
     $self->bad_proxy($proxy,);
     
   }
@@ -204,32 +204,9 @@ sub bad_proxy {# shortcut
   
 }
 
-sub dequeue {
-  my ($self, $count) = @_;
-  $count ||= 1;
+sub dump {shift->debug_stderr(dumper(@_));}
 
-  my @ua = splice @{$self->{queue} ||= []}, 0, $count;
-  say STDERR "SHIFT QUEUE [@ua]"
-    if $self->debug && @ua;
-  
-  push @ua, $self->mojo_ua
-    and $self->debug && say STDERR "NEW UA [@{[ $ua[-1] ]}]"
-    while @ua < $count;
-  
-  return $count == 1 ? $ua[0] : @ua;
-}
-
-sub enqueue {
-  my ($self, @ua) = @_;
-  my $queue = $self->{queue} ||= [];
-  push @$queue, shift @ua
-    and $self->debug && say STDERR "PUSH QUEUE [@{[ $queue->[-1] ]}]"
-    while (!$self->max_queque || @$queue < $self->max_queque) && @ua;
-  #~ shift @$queue while @$queue > $self->max_connections;
-  return scalar @ua;
-}
-
-sub dump {shift; say STDERR dumper(@_);}
+sub debug_stderr {say STDERR @_ if shift->debug; 1;}
 
 sub load_class {
   my $class = shift;
@@ -248,7 +225,7 @@ sub  AUTOLOAD {
   
   if ($ua->can($method)) {
     monkey_patch(__PACKAGE__, $method, sub { shift->ua->$method(@_); });
-    say STDERR "patching for Mojo::UserAgent->$method";
+    $self->debug_stderr( "patching for Mojo::UserAgent->$method");
     return $self->$method(@_);
   }
   

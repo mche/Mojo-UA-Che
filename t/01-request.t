@@ -6,42 +6,44 @@ use Mojo::UA::Che2;
 
 
 my $base_url = 'http://mojolicious.org/perldoc/';
-my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI utf8 strict);
+my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::Mojo Test::More DBI utf8 strict warnings Mojolicious);
 #~ my $dom_select = '#NAME ~ p';
 my $dom_select = 'head title';
 my $limit = 2;
 my $delay = Mojo::IOLoop->delay;
-$delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
 my @done = ();
+
+#~ $delay->on(finish => sub {say STDERR "\t\tDELAY FINISH";});
+
+#~ 
 
 sub test {
   my $che = shift;
-  #~ say STDERR "DEBUG: ", $che->debug;
   my $total = @modules;
-  #~ my @ua = $che->proxy_handler ?
-      #~ $che->dequeue($limit)
-    #~ : (($che->dequeue) x $limit);
-  #~ $delay->data(ua=>\@ua);
+  #~ $delay->on(finish => $delay->begin)
+    #~ if $limit ==1; #);
   start($che) for 1..$limit;
   $delay->wait;
   say STDERR 'Module ', $_ for @done;
 
-  #~ $che->enqueue($che->proxy_handler ? @ua : $ua[0]);
-
   is scalar @done, $total, 'proxying good';
+  
+  pass $base_url;
   
 }
 
-subtest 'Proxying' => \&test, Mojo::UA::Che2->new(proxy_module_has=>{max_try=>3, debug=>1,}, debug=>1, cookie_ignore=>1);
+my $che = Mojo::UA::Che2->new(proxy_module_has=>{max_try=>3, debug=>0,}, debug=>1, cookie_ignore=>1);
+
+subtest 'mojolicious.org' => \&test, $che;
 
 #~ pass 'proxying';
 
-#~ @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI);
+#~ $base_url = 'https://metacpan.org/pod/';
+#~ @modules = qw(Scalar::Util Mojolicious Mojo::Pg Test::More DBI DBD::Pg DBIx::Mojo::Template AnyEvent);
 #~ @done = ();
+#~ $limit = 3;
 
-#~ subtest 'Normal' => \&test, Mojo::UA::Che->new(debug=>1, cookie_ignore=>1);
-
-#~ pass 'normal';
+#~ subtest 'metacpan.org' => \&test, $che;#->proxy_module(undef);
 
 sub start {
   my $ua = shift;# || $ua->dequeue;
@@ -52,11 +54,10 @@ sub start {
   $ua->get( $url => sub {
     $end->();
     my ($mua, $tx) = @_;
-    my $res = $ua->process_tx($tx, $mua);
-    say STDERR "DONE: [$module]", $tx->{_res};
-      #~ and return start($mua, $module)
-      #~ unless  ref $res || $res =~ /404/;
+    my $res = $tx->{_res} || $ua->process_tx($tx,);
+    say STDERR "DONE: [$module]\t", $tx->req;
     push @done, process_res($res);
+    #~ $end->();
     start($ua);
     });
 }

@@ -60,13 +60,11 @@ sub good_proxy {# save or shift
   my ($self, $proxy) = @_;
   my $g = $self->_good_proxy;
   if ($proxy) {
-    say STDERR "SAVE GOOD PROXY: [$proxy]"
-      if $self->debug;
+    $self->debug_stderr( "SAVE GOOD PROXY: [$proxy]");
     $g->{$proxy} = 0;
     delete $self->using_proxy->{$proxy};
   } elsif ($proxy = (sort {$g->{$b} <=> $g->{$a}} keys %$g)[0]) {
-    say STDERR "USE PROXY: [$proxy]"
-      if $self->debug;
+    $self->debug_stderr( "USE PROXY: [$proxy]");
     $self->using_proxy->{$proxy} = delete $g->{$proxy};
     
   }
@@ -80,11 +78,13 @@ sub bad_proxy {
   $fail ||= 1;
   
   my $total = (delete $self->using_proxy->{$proxy} // 0)+$fail;
-  say STDERR "SAVE BAD PROXY[$proxy] FOR RETRY ", $total, '<', $self->max_try,
+  $self->debug_stderr( "SAVE BAD PROXY[$proxy] FOR RETRY ", $total, '<', $self->max_try),
     and $self->_good_proxy->{$proxy} = $total
     if $total < $self->max_try;
 
 }
+
+sub debug_stderr {say STDERR @_ if shift->debug; 1;}
 
 
 sub check_proxy {
@@ -103,31 +103,6 @@ sub check_proxy {
   #~ $res->code;
 }
 
-sub change_proxy00 {
-  my ($self, $ua, $proxy) = @_;
-  my $ua_proxy = $ua->proxy;
-  $proxy ||= $ua_proxy->https || $ua_proxy->http;
-  
-  ($self->debug && say STDERR "NEXT TRY[$ua_proxy->{_tried}] proxy[$proxy] for [$ua]") || 1
-    and return $proxy
-      if $proxy && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
-  
-  $self->bad_proxy($proxy)
-    if $proxy;
-  
-  unless ($proxy = $self->use_proxy) {
-    $ua_proxy->http(undef)->https(undef);
-    $ua_proxy->{_tried} = 0;
-    return undef;
-  }
-  
-  $ua_proxy->http($proxy)->https($proxy)
-    and $self->debug && say STDERR "SET PROXY [$proxy]";
-  
-  $ua_proxy->{_tried} = 0;
-  
-  return $proxy;
-}
 
 
 
