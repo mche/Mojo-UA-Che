@@ -61,15 +61,19 @@ for my $method (qw(delete get head options patch post put)) {# Common HTTP metho
     my $self = shift;
     my @args = @_;
     my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
-    my $finish_tx = sub {
-      my ($ua, $tx) = @_;
-      return $self->$method(@args)
-        unless $self->finish_tx($tx);
-      return $ua->$cb($tx)
-        if $cb;
-      return $tx;
-    } if $self->proxy_handler;
     my $tx = $self->ua->build_tx($method, @_);
+    my $finish_tx = sub {
+      my ($ua, $_tx) = @_;
+      say STDERR "REBUILD TX on bad res", $_tx->req->url
+        and return $self->$method(@args)
+        unless $self->finish_tx($_tx);
+      say STDERR "FINISH TX ON callback"
+        and return $ua->$cb($_tx)
+        if $cb;
+      say STDERR "COPY NEXT TX to PREV TX";
+      $tx = $_tx;
+    } if $self->proxy_handler;
+    
     $self->start_tx($tx);
     $self->ua->start($tx, $finish_tx || $cb);
     

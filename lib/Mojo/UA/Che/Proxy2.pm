@@ -23,6 +23,7 @@ has check_url => '';
 
 has list => sub {[]};
 has good_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
+has using_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 
 has qw(debug);
 
@@ -59,11 +60,11 @@ sub good_proxy {# save or shift
     say STDERR "SAVE GOOD PROXY: [$proxy]"
       if $self->debug;
     $g->{$proxy} = 0;
-    delete $self->{_using}{$proxy};
+    delete $self->using_proxy->{$proxy};
   } elsif ($proxy = (sort {$g->{$b} <=> $g->{$a}} keys %$g)[0]) {
     say STDERR "USE GOOD PROXY: [$proxy]"
       if $self->debug;
-    $self->{_using}{$proxy} = delete $g->{$proxy};
+    $self->using_proxy->{$proxy} = delete $g->{$proxy};
     
   }
   
@@ -75,8 +76,9 @@ sub bad_proxy {
   return unless $proxy;
   $fail ||= 1;
   
-  my $total = delete $self->{_using}{$proxy}+$fail;
-  $self->good_proxy->{$proxy} = $total
+  my $total = (delete $self->using_proxy->{$proxy} // 0)+$fail;
+  say STDERR "SAVE BAD PROXY[$proxy] FOR RETRY"
+    and $self->good_proxy->{$proxy} = $total
     if $total < $self->max_try;
 
 }

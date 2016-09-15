@@ -2,14 +2,14 @@ use Mojo::Base -strict;
 binmode(STDERR, ':utf8');
 
 use Test::More;
-use Mojo::UA::Che;
+use Mojo::UA::Che2;
 
 
 my $base_url = 'http://mojolicious.org/perldoc/';
 my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::More DBI utf8 strict);
 #~ my $dom_select = '#NAME ~ p';
 my $dom_select = 'head title';
-my $limit = 3;
+my $limit = 1;
 my $delay = Mojo::IOLoop->delay;
 $delay->on(finish => $delay->begin); #sub {warn "  FINISH!!!"; $delay->begin});
 my @done = ();
@@ -18,21 +18,21 @@ sub test {
   my $che = shift;
   #~ say STDERR "DEBUG: ", $che->debug;
   my $total = @modules;
-  my @ua = $che->proxy_handler ?
-      $che->dequeue($limit)
-    : (($che->dequeue) x $limit);
+  #~ my @ua = $che->proxy_handler ?
+      #~ $che->dequeue($limit)
+    #~ : (($che->dequeue) x $limit);
   #~ $delay->data(ua=>\@ua);
-  start($_) for @ua;
+  start($che) for 1..$limit;
   $delay->wait;
   say STDERR 'Module ', $_ for @done;
 
-  $che->enqueue($che->proxy_handler ? @ua : $ua[0]);
+  #~ $che->enqueue($che->proxy_handler ? @ua : $ua[0]);
 
   is scalar @done, $total, 'proxying good';
   
 }
 
-subtest 'Proxying' => \&test, Mojo::UA::Che->new(proxy_module_has=>{max_try=>2, debug=>1,}, debug=>1, cookie_ignore=>1);
+subtest 'Proxying' => \&test, Mojo::UA::Che2->new(proxy_module_has=>{max_try=>2, debug=>1,}, debug=>1, cookie_ignore=>1);
 
 #~ pass 'proxying';
 
@@ -52,12 +52,12 @@ sub start {
   $ua->get( $url => sub {
     $end->();
     my ($mua, $tx) = @_;
-    my $res = $ua->{'Mojo::UA::Che'}->process_tx($tx, $mua);
-    say STDERR "AGAIN: [$module] $res"
-      and return start($mua, $module)
-      unless  ref $res || $res =~ /404/;
+    my $res = $ua->process_tx($tx, $mua);
+    say STDERR "DONE: [$module] $res";
+      #~ and return start($mua, $module)
+      #~ unless  ref $res || $res =~ /404/;
     push @done, process_res($res);
-    start($mua);
+    start($ua);
     });
 }
 
