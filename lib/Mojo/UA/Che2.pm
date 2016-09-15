@@ -67,10 +67,10 @@ for my $method (qw(delete get head options patch post put)) {# Common HTTP metho
       say STDERR "REBUILD TX on bad res", $_tx->req->url
         and return $self->$method(@args)
         unless $self->finish_tx($_tx);
-      say STDERR "FINISH TX ON callback"
+      say STDERR "FINISH TX by callback"
         and return $ua->$cb($_tx)
         if $cb;
-      say STDERR "COPY NEXT TX to PREV TX";
+      say STDERR "PREV TX = NEXT TX";
       $tx = $_tx;
     } if $self->proxy_handler;
     
