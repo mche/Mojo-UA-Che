@@ -26,8 +26,6 @@ has ua => sub {shift->mojo_ua};
 
 has mojo_ua_has => sub { {} }; # опции для Mojo::UA->new
 
-has max_queque => 0; # 0 - неограниченное количество агентов в пуле
-
 has debug => 0;
 
 has cookie_ignore => 0;
@@ -35,7 +33,7 @@ has cookie_ignore => 0;
 has [qw'proxy '];
 has proxy_module => 'Mojo::UA::Che::Proxy';
 has proxy_module_has => sub { {} };
-has proxy_max_try => 5;
+#~ has proxy_max_try => 5;
 #~ has proxy_max_fail => 50;
 
 #~ has _proxy_module_has => sub { {max_try => 3} };# опции для new proxy_module
@@ -74,6 +72,8 @@ for my $method (qw(delete get head options patch post put)) {# Common HTTP metho
     
   };
 }
+
+#~ monkey_patch 'Mojo::Transaction', 'res_success', sub {  };
 
 #~ sub new {
   #~ my $self = shift->SUPER::new(@_);
@@ -126,12 +126,8 @@ sub prepare_proxy {#  set proxy
 }
 
 sub finish_tx { # логика строгая
-=pod
-Вернуть истину если транзакция хорошая
-Плохая транзакция по возвращенной false будет запущена заново:
-1) Еще попытки этого прокси.
-
-=cut
+#~ Вернуть истину если транзакция хорошая
+#~ Плохая транзакция по возвращенной false будет запущена заново:
   my ($self, $tx) = @_;
   #~ my $handler = $self->proxy_handler
     #~ or return $tx;
@@ -243,24 +239,101 @@ our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
-    use Mojo::UA::Che;
-
-    my $ua = Mojo::UA::Che->new();
-    ...
+  use Mojo::UA::Che;
 
 
+  my $base_url = 'http://mojolicious.org/perldoc/';
+  my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::Mojo DBI utf8 strict warnings);
+  my $dom_select = 'head title';
+  my $limit = 2;
+  my $delay = Mojo::IOLoop->delay;
+  my @done = ();
+  my $che = Mojo::UA::Che->new(proxy_module_has=>{max_try=>5, debug=>0,}, debug=>$ENV{DEBUG}, cookie_ignore=>1);
 
+
+
+  request() for 1..$limit;
+  $delay->wait;
+  say 'Module ', $_ for @done;
+
+
+
+  sub request {
+    my $module = shift() || shift @modules
+      || return;
+    my $url = $base_url.$module;
+    my $end = $delay->begin;
+    $che->get( $url => sub {
+      my ($ua, $tx) = @_;
+      my $res = $tx->{_res} || $che->process_tx($tx,);
+      push @done, process_res($res);
+      request();
+      $end->();
+      });
+  }
+
+  sub process_res {
+    my $res = shift;
+    return $res
+      unless ref $res;
+    $res->dom->at($dom_select)->text;
+    
+  }
+
+=head1 ATTRIBUTES
+
+=head1 ua
+
+Mojo::UserAgent object.
+
+=head2 mojo_ua_has
+
+Hashref attributes for new Mojo::UserAgent constructor. See L<Mojo::UserAgent#ATTRIBUTES>.
+
+=head2 ua_name
+
+Mojo::UserAgent->transactor name.
+
+=head2 ua_names
+
+Arrayref for random setting UA transactor name.
+
+=head2 cookie_ignore
+
+Boolean for cookie using. Will pass to Mojo::UserAgent->cookie_jar->ignore().
+
+=head2 proxy
+
+Permanent proxy. Will pass to Mojo::UserAgent->proxy->https()->http()
+
+  $che->proxy('socks://127.0.0.1:9050');
+
+=head proxy_handler
+
+Object for proxy list management.
+
+=head2 proxy_module
+
+String of module for create new proxy handler. Defaults to 'Mojo::UA::Che::Proxy'.
+
+=head2 proxy_module_has
+
+Hashref attributes for create new proxy handler. See L<Mojo::UA::Che::Proxy>
+
+=head2 proxy_not
+
+Arrayref of domain srings. Will pass to Mojo::UserAgent->proxy->not().
+
+  push @{$che->proxy_not}, 'foo.com';
+
+=head1 METHODS
+
+Common HTTP methods DELETE GET HEAD OPTIONS PATCH POST PUT like Mojo::UserAgent.
 
 
 =head1 SEE ALSO
 
 L<Mojo::UA>
-
-L<Mojo::Pg>
 
 L<https://habrahabr.ru/post/228141/>
 

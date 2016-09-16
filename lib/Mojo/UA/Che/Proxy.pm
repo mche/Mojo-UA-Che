@@ -1,4 +1,4 @@
-package Mojo::UA::Che::Proxy2;
+package Mojo::UA::Che::Proxy;
 use Mojo::Base 'Mojo::UserAgent::Proxy';
 use Mojo::UserAgent;
 
