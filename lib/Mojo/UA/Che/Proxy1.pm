@@ -1,4 +1,4 @@
-package Mojo::UA::Che::Proxy2;
+package Mojo::UA::Che::Proxy;
 use Mojo::Base 'Mojo::UserAgent::Proxy';
 use Mojo::UserAgent;
 
@@ -16,14 +16,12 @@ has ua => sub {
   return $ua;
 };
 
-has max_try => 3; # цикл попыток (для смены прокси)
+#~ has max_try => 3; # цикл попыток (для смены прокси)
 
 has proxy_url => 'http://hideme.ru/proxy-list/?type=45#list';
 has check_url => '';
 
 has list => sub {[]};
-has _good_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
-has using_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 
 has qw(debug);
 
@@ -46,46 +44,13 @@ sub proxy_load {# загрузка списка
 
 sub use_proxy {
   my $self = shift;
-  my $proxy = $self->good_proxy;
-  return $proxy
-    if $proxy;
-  $proxy = shift @{$self->list}
+  my $proxy = $self->good_proxy ||  shift @{$self->list}
     || ($self->proxy_load && shift @{$self->list})
     || die "Не смог получить проксю";
+  #~ $self->render(json=>$r);
+  #~ $self->check_proxy($r);
   return 'socks://' . $proxy;
 }
-
-
-sub good_proxy {# save or shift
-  my ($self, $proxy) = @_;
-  my $g = $self->_good_proxy;
-  if ($proxy) {
-    $self->debug_stderr( "SAVE GOOD PROXY: [$proxy]");
-    $g->{$proxy} = 0;
-    delete $self->using_proxy->{$proxy};
-  } elsif ($proxy = (sort {$g->{$b} <=> $g->{$a}} keys %$g)[0]) {
-    $self->debug_stderr( "USE PROXY: [$proxy]");
-    $self->using_proxy->{$proxy} = delete $g->{$proxy};
-    
-  }
-  
-  return $proxy;
-}
-
-sub bad_proxy {
-  my ($self, $proxy, $fail) = @_;
-  return unless $proxy;
-  $fail ||= 1;
-  
-  my $total = (delete $self->using_proxy->{$proxy} // 0)+$fail;
-  $self->debug_stderr( "SAVE BAD PROXY[$proxy] FOR RETRY ", $total, '<', $self->max_try),
-    and $self->_good_proxy->{$proxy} = $total
-    if $total < $self->max_try;
-
-}
-
-sub debug_stderr {say STDERR @_ if shift->debug; 1;}
-
 
 sub check_proxy {
   my ($self, $proxy) = @_;
@@ -103,7 +68,56 @@ sub check_proxy {
   #~ $res->code;
 }
 
+#~ sub change_proxy {
+  #~ my ($self, $ua, $proxy) = @_;
+  #~ my $ua_proxy = $ua->proxy;
+  #~ $proxy ||= $ua_proxy->https || $ua_proxy->http;
+  
+  #~ ($self->debug && say STDERR "NEXT TRY[$ua_proxy->{_tried}] proxy[$proxy] for [$ua]") || 1
+    #~ and return $proxy
+      #~ if $proxy && $self->max_try && ++$ua_proxy->{_tried} < $self->max_try;
+  
+  #~ $self->bad_proxy($proxy)
+    #~ if $proxy;
+  
+  #~ unless ($proxy = $self->use_proxy) {
+    #~ $ua_proxy->http(undef)->https(undef);
+    #~ $ua_proxy->{_tried} = 0;
+    #~ return undef;
+  #~ }
+  
+  #~ $ua_proxy->http($proxy)->https($proxy)
+    #~ and $self->debug && say STDERR "SET PROXY [$proxy]";
+  
+  #~ $ua_proxy->{_tried} = 0;
+  
+  #~ return $proxy;
+#~ }
 
+sub good_proxy {# save or shift
+  my ($self, $proxy) = @_;
+  my $good = $self->{good_proxy} ||= [];
+  ($self->debug && say STDERR "SAVE GOOD PROXY: [$proxy]") || 1
+    and return push @$good, $proxy
+      if $proxy;
+  $proxy = shift @$good;
+  $self->debug && $proxy && say STDERR "USE GOOD PROXY: [$proxy]";
+  return $proxy;
+}
+
+#~ sub good_proxy {
+  #~ my ($self, $proxy) = @_;
+  #~ $proxy = ( $proxy =~ /([\d\.]+:\d+)$/ )[0]
+    #~ or return;
+  #~ $self->model->status_proxy('G', $proxy);
+#~ }
+
+sub bad_proxy {
+  my ($self, $proxy) = @_;
+  $proxy = ( $proxy =~ /([\d\.]+:\d+)$/ )[0]
+    or return;
+  #~ $self->model->status_proxy('B', $proxy);
+}
 
 
 
