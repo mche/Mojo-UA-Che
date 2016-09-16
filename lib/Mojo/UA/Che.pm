@@ -174,13 +174,6 @@ sub process_tx {
   
 }
 
-#~ sub change_proxy {# shortcut
-  #~ my ($self,) = shift;
-  #~ my $handler = $self->proxy_handler
-    #~ or return;
-  #~ $handler->change_proxy(@_);
-#~ }
-
 sub good_proxy {# shortcut
   my ($self,) = shift;
   my $handler = $self->proxy_handler
@@ -241,11 +234,11 @@ Mojo::UA::Che - Mojo::UserAgent for proxying async req.
 
 =head1 VERSION
 
-Version 0.03
+Version 0.10
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.10';
 
 
 =head1 SYNOPSIS
