@@ -27,7 +27,7 @@ has list_time_fresh => 1200; # секунды свежести списка
 has _good_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 has using_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 
-has qw(debug config_file proxy_url parse_proxy_url);
+has [qw(debug config_file proxy_url parse_proxy_url)];
 
 
 sub new {
