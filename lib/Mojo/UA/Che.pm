@@ -63,12 +63,12 @@ for my $method (qw(delete get head options patch post put)) {# Common HTTP metho
       $self->debug_stderr( "FINISH TX by callback \t", $_tx->req->url)
         and return $ua->$cb($_tx)
         if $cb;
-      #~ $self->debug_stderr( "PREV TX[$tx] = NEXT TX[$_tx]");
-      #~ $tx = $_tx;
+      $self->debug_stderr( "PREV TX[$tx] = NEXT TX[$_tx]");
+      $tx = $_tx;
     } if $self->proxy_handler;
     
     $self->start_tx($tx);
-    return $self->ua->start($tx, $finish_tx || $cb);
+    $self->ua->start($tx, $finish_tx || $cb);
   };
 }
 
@@ -104,7 +104,7 @@ sub mojo_ua {
 sub start_tx {
   my ($self, $tx) = @_;
   return unless $self->proxy_handler;
-  $self->debug_stderr( "START \t", $tx->req->url);
+  $self->debug_stderr( "START TX \t", $tx->req->url);
   $self->prepare_proxy($tx);
   #~ $tx->once(finish => sub {$self->on_finish_tx(@_)});
 }

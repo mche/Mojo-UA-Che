@@ -53,7 +53,8 @@ sub use_proxy {
   return $proxy
     if $proxy;
   
-  $self->list([])
+  $self->debug_stderr( 'Kill proxy list by time limit for refresh' )
+    and $self->list([])
     if $self->list_time - time() > $self->list_time_fresh;
   
   $proxy = shift @{$self->list}
