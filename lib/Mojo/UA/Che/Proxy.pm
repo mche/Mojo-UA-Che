@@ -22,6 +22,8 @@ has proxy_url => 'http://hideme.ru/proxy-list/?type=45#list';
 has check_url => '';
 
 has list => sub {[]};
+has list_time => sub { time() };
+has list_time_fresh => 900; # секунды свежести списка
 has _good_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 has using_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 
