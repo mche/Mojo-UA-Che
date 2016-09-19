@@ -23,7 +23,7 @@ has check_url => '';
 
 has list => sub {[]};
 has list_time => sub { time() };
-has list_time_fresh => 900; # секунды свежести списка
+has list_time_fresh => 1200; # секунды свежести списка
 has _good_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 has using_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 
@@ -34,8 +34,9 @@ sub proxy_load {# загрузка списка
   my $self = shift;
   my $tx = $self->ua->get($self->proxy_url,);
   my $err = $tx->error;
-  die sprintf("Ошибка запроса [%s] списка проксей: %s", $self->proxy_url, $err->{code} || $err->{message})
+  die sprintf("Ошибка запроса [%s] списка проксей: %s %s", $self->proxy_url, $err->{code}, $err->{message})
     if $err;
+  $self->list_time(time());
   $tx->res->dom->find('table.proxy__t tbody tr')->map(sub {
     my $ip = $_->at('td.tdl');
     my $port = $ip->next_node;
@@ -51,6 +52,10 @@ sub use_proxy {
   my $proxy = $self->good_proxy;
   return $proxy
     if $proxy;
+  
+  $self->list([])
+    if $self->list_time - time() > $self->list_time_fresh;
+  
   $proxy = shift @{$self->list}
     || ($self->proxy_load && shift @{$self->list})
     || die "Не смог получить проксю";
