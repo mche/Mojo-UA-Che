@@ -63,17 +63,14 @@ for my $method (qw(delete get head options patch post put)) {# Common HTTP metho
       $self->debug_stderr( "FINISH TX [$_tx] by callback \t", $_tx->req->url)
         and return $ua->$cb($_tx)
         if $cb;
-      $self->debug_stderr( "PREV TX[$tx] = NEXT TX[$_tx]");
-      $tx = $_tx;
+      #~ $self->debug_stderr( "PREV TX[$tx] = NEXT TX[$_tx]");
+      #~ $tx = $_tx;
     } if $self->proxy_handler;
     
     $self->start_tx($tx);
-    $self->ua->start($tx, $finish_tx || $cb);
-    
+    return $self->ua->start($tx, $finish_tx || $cb);
   };
 }
-
-#~ monkey_patch 'Mojo::Transaction', 'res_success', sub {  };
 
 #~ sub new {
   #~ my $self = shift->SUPER::new(@_);
