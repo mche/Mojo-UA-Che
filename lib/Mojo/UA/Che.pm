@@ -57,10 +57,10 @@ for my $method (qw(delete get head options patch post put)) {# Common HTTP metho
     my $tx = $self->ua->build_tx($method, @_);
     my $finish_tx = sub {
       my ($ua, $_tx) = @_;
-      $self->debug_stderr( "REBUILD TX [$_tx] on bad response \t", $_tx->req->url)
+      $self->debug_stderr( "REBUILD TX on bad response \t", $_tx->req->url)
         and return $self->$method(@args)
         unless $self->finish_tx($_tx);
-      $self->debug_stderr( "FINISH TX [$_tx] by callback \t", $_tx->req->url)
+      $self->debug_stderr( "FINISH TX by callback \t", $_tx->req->url)
         and return $ua->$cb($_tx)
         if $cb;
       #~ $self->debug_stderr( "PREV TX[$tx] = NEXT TX[$_tx]");
@@ -104,7 +104,7 @@ sub mojo_ua {
 sub start_tx {
   my ($self, $tx) = @_;
   return unless $self->proxy_handler;
-  $self->debug_stderr( "START TX [$tx]\t", $tx->req->url);
+  $self->debug_stderr( "START \t", $tx->req->url);
   $self->prepare_proxy($tx);
   #~ $tx->once(finish => sub {$self->on_finish_tx(@_)});
 }
@@ -133,7 +133,7 @@ sub finish_tx { # логика строгая
     and return $tx;
   # заглянуть в ответ
   my $res = $tx->{_res} = $self->process_tx($tx);
-  $self->debug_stderr( "GOOD PROXY [$proxy] for response $res")
+  $self->debug_stderr( "GOOD PROXY [$proxy]")
     and $self->good_proxy($proxy)
     and return $tx
     if ref $res || $res =~ m'404';
