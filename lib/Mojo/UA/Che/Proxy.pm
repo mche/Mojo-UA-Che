@@ -19,6 +19,8 @@ has ua => sub {
 has max_try => 3; # цикл попыток (для смены прокси)
 
 has proxy_url => 'http://hideme.ru/proxy-list/?type=45#list';
+# http://proxyserverlist-24.blogspot.ru/2016/09/19-09-16-free-proxy-server-list-2316.html
+has proxy_type => 'socks'; # socks | http
 has check_url => '';
 
 has list => sub {[]};
@@ -32,6 +34,7 @@ has qw(debug);
 
 sub proxy_load {# загрузка списка
   my $self = shift;
+  die "Нет адреса скачки списка проксей (has proxy_url)";
   my $tx = $self->ua->get($self->proxy_url,);
   my $err = $tx->error;
   die sprintf("Ошибка запроса [%s] списка проксей: %s %s", $self->proxy_url, $err->{code}, $err->{message})
@@ -60,7 +63,7 @@ sub use_proxy {
   $proxy = shift @{$self->list}
     || ($self->proxy_load && shift @{$self->list})
     || die "Не смог получить проксю";
-  return 'socks://' . $proxy;
+  return $self->proxy_type .'://' . $proxy;
 }
 
 
