@@ -2,6 +2,13 @@ use Mojo::Base -strict;
 binmode(STDERR, ':utf8');
 
 use Test::More;
+
+#~ plan skip_all => 'skiping: IO::Socket::SSL require'
+  #~ unless eval {require IO::Socket::SSL};
+
+plan skip_all => 'skiping: IO::Socket::Socks require'
+  unless eval {require IO::Socket::Socks};
+
 use Mojo::UA::Che;
 
 
