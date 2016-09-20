@@ -245,7 +245,7 @@ our $VERSION = '0.12';
   my $limit = 2;
   my $delay = Mojo::IOLoop->delay;
   my @done = ();
-  my $che = Mojo::UA::Che->new(proxy_module_has=>{max_try=>5, debug=>0,}, debug=>$ENV{DEBUG}, cookie_ignore=>1);
+  my $che = Mojo::UA::Che->new(proxy_module_has=>{config_file=>'example/www.live-socks.net.conf.pl',}, debug=>$ENV{DEBUG}, cookie_ignore=>1);
 
 
 
