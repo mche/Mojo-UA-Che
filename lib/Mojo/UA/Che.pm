@@ -223,16 +223,20 @@ sub  AUTOLOAD {
 
 =head1 NAME
 
-Mojo::UA::Che - Mojo::UserAgent for proxying async req.
+Mojo::UA::Che - UserAgent for proxying async reqs by diffrent lists.
 
 =head1 VERSION
 
-Version 0.12
+Version 0.13
 
 =cut
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
+
+=head1 DESCRIPTION
+
+Auto repeat/rebuild transactions with changing proxy. Will save and reuse good proxy if success tx.
 
 =head1 SYNOPSIS
 
@@ -240,7 +244,7 @@ our $VERSION = '0.12';
 
 
   my $base_url = 'http://mojolicious.org/perldoc/';
-  my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::Mojo DBI utf8 strict warnings);
+  my @modules = qw(Mojo::UserAgent Mojo::IOLoop Test::Mojo utf8);
   my $dom_select = 'head title';
   my $limit = 2;
   my $delay = Mojo::IOLoop->delay;

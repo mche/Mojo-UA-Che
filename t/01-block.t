@@ -6,7 +6,7 @@ use Mojo::UA::Che;
 
 
 my $base_url = 'http://mojolicious.org/perldoc/';
-my @modules = qw(Mojo::UserAgent Mojo::IOLoop Mojo Test::Mojo DBI utf8 strict warnings);
+my @modules = qw(Mojo::UserAgent Mojo::IOLoop Test::Mojo);
 #~ my $dom_select = '#NAME ~ p';
 my $dom_select = 'head title';
 my $limit = 2;
