@@ -57,8 +57,8 @@ sub use_proxy {
     and $self->list([])
     if $self->list_time_fresh && $self->list_time - time() > $self->list_time_fresh;
   
-  $proxy = shift @{$self->list}
-    || ($self->proxy_load && shift @{$self->list})
+  $proxy = splice(@{$self->list}, int rand @{$self->list},1)
+    || ($self->proxy_load && splice(@{$self->list}, int rand @{$self->list},1))
     || die "Не смог получить проксю";
   return $self->proxy_type .'://' . $proxy;
 }
