@@ -31,23 +31,33 @@ has using_proxy => sub { {} }; # фрмат записи 'полный прок�
 
 has qw(debug);
 
+has _proxy_load => {
+  sub {
+    my $self = shift;
+    my $tx = $self->ua->get($self->proxy_url,);
+    my $err = $tx->error;
+    die sprintf("Ошибка запроса [%s] списка проксей: %s %s", $self->proxy_url, $err->{code}, $err->{message})
+      if $err;
+    $tx->res->dom->find('table.proxy__t tbody tr')->map(sub {
+      my $ip = $_->at('td.tdl');
+      my $port = $ip->next_node;
+      my $type = lc((split /,/, $_->child_nodes->[-3]->content)[-1]) ;
+      my $proxy = $ip->content.':'.$port->content;
+      #~ return [$ip->content, $port->content, $type];
+      
+      })->each;
+  };
+  
+}
 
 sub proxy_load {# загрузка списка
   my $self = shift;
-  die "Нет адреса скачки списка проксей (has proxy_url)";
-  my $tx = $self->ua->get($self->proxy_url,);
-  my $err = $tx->error;
-  die sprintf("Ошибка запроса [%s] списка проксей: %s %s", $self->proxy_url, $err->{code}, $err->{message})
-    if $err;
+  die "Нет адреса скачки списка проксей (has proxy_url)"
+    unless $self->proxy_url;
+  my $load = $self->_proxy_load;
+  push @{$self->list}, $self->$load();
   $self->list_time(time());
-  $tx->res->dom->find('table.proxy__t tbody tr')->map(sub {
-    my $ip = $_->at('td.tdl');
-    my $port = $ip->next_node;
-    my $type = lc((split /,/, $_->child_nodes->[-3]->content)[-1]) ;
-    my $proxy = $ip->content.':'.$port->content;
-    #~ return [$ip->content, $port->content, $type];
-    push @{$self->list}, $proxy;
-  });
+  
 }
 
 sub use_proxy {
@@ -58,7 +68,7 @@ sub use_proxy {
   
   $self->debug_stderr( 'Kill proxy list by time limit for refresh' )
     and $self->list([])
-    if $self->list_time - time() > $self->list_time_fresh;
+    if $self->list_time_fresh && $self->list_time - time() > $self->list_time_fresh;
   
   $proxy = shift @{$self->list}
     || ($self->proxy_load && shift @{$self->list})

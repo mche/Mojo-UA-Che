@@ -41,7 +41,7 @@ has proxy_handler => sub {
   my $self = shift;
   return unless $self->proxy_module;
   load_class($self->proxy_module)
-    ->new(%{$self->proxy_module_has});
+    ->new($self->proxy_config ? %{ do $self->proxy_config} : (), %{$self->proxy_module_has});
 };
 
 has proxy_not => sub {[]};
