@@ -42,7 +42,7 @@ sub proxy_load {# загрузка списка
   die "Нет адреса скачки списка проксей (has proxy_url)"
     unless $self->proxy_url;
   my $cb_load = $self->parse_proxy_url;
-  push @{$self->list}, $self->$cb_load();
+  $self->debug_stderr("Загружено проксей: ", push @{$self->list}, $self->$cb_load());
   $self->list_time(time());
   
 }

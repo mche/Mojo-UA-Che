@@ -12,6 +12,7 @@ use Mojo::Base -strict;
     my $links = $tx->res->dom->find('h3.post-title.entry-title a')
       or die "Не нашел ссылки на списки проксей";
     $links->map(sub {
+      $self->debug_stderr("Найдена ссылка проксей ", $_->attr('href'));
       my $tx = $self->ua->get($_->attr('href'));
       my $err = $tx->error;
       die sprintf("Ошибка запроса [%s] списка проксей: %s %s", $_->attr('href'), $err->{code}, $err->{message})
