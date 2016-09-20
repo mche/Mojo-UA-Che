@@ -2,6 +2,7 @@ use Mojo::Base -strict;
 
 {
   proxy_url => 'http://www.live-socks.net/',
+  list_time_fresh => 24*60*60,
   parse_proxy_url => sub {
     my $self = shift;
     my $tx = $self->ua->get($self->proxy_url,);
