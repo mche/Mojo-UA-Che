@@ -53,7 +53,7 @@ sub use_proxy {
   return $proxy
     if $proxy;
   
-  $self->debug_stderr( 'Kill proxy list by time limit for refresh' )
+  $self->debug_stderr( 'Clear proxy list by time limit for refresh' )
     and $self->list([])
     if $self->list_time_fresh && time() - $self->list_time > $self->list_time_fresh;
   
