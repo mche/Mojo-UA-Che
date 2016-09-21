@@ -55,7 +55,7 @@ sub use_proxy {
   
   $self->debug_stderr( 'Kill proxy list by time limit for refresh' )
     and $self->list([])
-    if $self->list_time_fresh && $self->list_time - time() > $self->list_time_fresh;
+    if $self->list_time_fresh && time() - $self->list_time > $self->list_time_fresh;
   
   $proxy = splice(@{$self->list}, int rand @{$self->list},1)
     || ($self->proxy_load && splice(@{$self->list}, int rand @{$self->list},1))
