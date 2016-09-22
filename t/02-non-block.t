@@ -10,6 +10,7 @@ plan skip_all => 'skiping: IO::Socket::Socks require'
   unless eval {require IO::Socket::Socks};
 
 use Mojo::UA::Che;
+use Mojolicious::Plugin::Config;
 
 
 my $base_url = 'http://mojolicious.org/perldoc/';
@@ -19,7 +20,7 @@ my $dom_select = 'head title';
 my $limit = 2;
 my $delay = Mojo::IOLoop->delay;
 my @done = ();
-my $che = Mojo::UA::Che->new(proxy_module_has=>{config_file=>'example/www.live-socks.net.conf.pl', max_try=>5, debug=>$ENV{DEBUG},}, debug=>$ENV{DEBUG}, cookie_ignore=>1);
+my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.live-socks.net.conf.pl')}, cookie_ignore=>1);
 
 subtest 'mojolicious.org' => \&test;
 

@@ -1,7 +1,7 @@
 package Mojo::UA::Che::Proxy;
 use Mojo::Base 'Mojo::UserAgent::Proxy';
 use Mojo::UserAgent;
-use Mojolicious::Plugin::Config;
+
 
 has ua_has => sub { {} };
 has ua_name => 'SuperAgent 0.07';
@@ -27,15 +27,15 @@ has list_time_fresh => 1200; # секунды свежести списка
 has _good_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 has using_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 
-has [qw(debug config_file proxy_url parse_proxy_url)];
+has [qw(debug  proxy_url parse_proxy_url)];#config_file
 
 
-sub new {
-  my $class = shift;
-  my %arg = @_;
-  $class->SUPER::new($arg{config_file} ? %{Mojolicious::Plugin::Config->new->load($arg{config_file})} : (), @_);
+#~ sub new {
+  #~ my $class = shift;
+  #~ my %arg = @_;
+  #~ $class->SUPER::new($arg{config_file} ? %{Mojolicious::Plugin::Config->new->load($arg{config_file})} : (), @_);
   
-}
+#~ }
 
 sub proxy_load {# загрузка списка
   my $self = shift;
