@@ -1,7 +1,7 @@
 use Mojo::Base -strict;
 
 {
-  proxy_module_has => {
+  proxy_handler_has => {
     proxy_url => 'http://www.live-socks.net/',
     list_time_fresh => 6*60*60,
     parse_proxy_url => sub {

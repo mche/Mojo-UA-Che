@@ -32,16 +32,16 @@ has cookie_ignore => 0;
 
 has [qw'proxy '];
 has proxy_module => 'Mojo::UA::Che::Proxy';
-has proxy_module_has => sub { {} };
+has proxy_handler_has => sub { {} };
 #~ has proxy_max_try => 5;
 #~ has proxy_max_fail => 50;
 
-#~ has _proxy_module_has => sub { {max_try => 3} };# опции для new proxy_module
+#~ has _proxy_handler_has => sub { {max_try => 3} };# опции для new proxy_module
 has proxy_handler => sub {
   my $self = shift;
   return unless $self->proxy_module;
   load_class($self->proxy_module)
-    ->new(%{$self->proxy_module_has});
+    ->new(%{$self->proxy_handler_has});
 };
 
 has proxy_not => sub {[]};
@@ -227,11 +227,11 @@ Mojo::UA::Che - UserAgent for proxying async reqs by diffrent lists.
 
 =head1 VERSION
 
-Version 0.15
+Version 0.16
 
 =cut
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 
 =head1 DESCRIPTION
@@ -241,6 +241,7 @@ Auto repeat/rebuild transactions with changing proxy. Will save and reuse good p
 =head1 SYNOPSIS
 
   use Mojo::UA::Che;
+  use Mojolicious::Plugin::Config;
 
 
   my $base_url = 'http://mojolicious.org/perldoc/';
@@ -249,7 +250,7 @@ Auto repeat/rebuild transactions with changing proxy. Will save and reuse good p
   my $limit = 2;
   my $delay = Mojo::IOLoop->delay;
   my @done = ();
-  my $che = Mojo::UA::Che->new(proxy_module_has=>{config_file=>'example/www.live-socks.net.conf.pl',}, debug=>$ENV{DEBUG}, cookie_ignore=>1);
+  my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.live-socks.net.conf.pl')}, cookie_ignore=>1);
 
 
 
@@ -317,7 +318,7 @@ Object for proxy list management.
 
 String of module for create new proxy handler. Defaults to 'Mojo::UA::Che::Proxy'.
 
-=head2 proxy_module_has
+=head2 proxy_handler_has
 
 Hashref attributes for create new proxy handler. See L<Mojo::UA::Che::Proxy>
 

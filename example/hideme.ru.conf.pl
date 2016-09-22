@@ -1,7 +1,7 @@
 use Mojo::Base -strict;
 
 {
-  proxy_module_has => {
+  proxy_handler_has => {
     proxy_url => 'http://hideme.ru/proxy-list/?type=45#list',
     parse_proxy_url => sub {
       my $self = shift;
