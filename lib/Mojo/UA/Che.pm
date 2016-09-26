@@ -46,6 +46,8 @@ has proxy_handler => sub {
 
 has proxy_not => sub {[]};
 
+has res_success => qr/404/;
+
 my $pkg = __PACKAGE__;
 
 # HEART OF MODULE
@@ -136,7 +138,7 @@ sub finish_tx { # логика строгая
   $self->debug_stderr( "GOOD PROXY [$proxy]")
     and $self->good_proxy($proxy)
     and return $tx
-    if ref $res || $res =~ m'404';
+    if ref $res || $res =~ /$self->res_success/;
   
   if ($res =~ m'429|403|отказано|premature|Auth'i) {
     $self->debug_stderr( "FAIL PROXY [$proxy] $res");

@@ -12,3 +12,4 @@ t/pod-coverage.t
 t/pod.t
 example/www.live-socks.net.conf.pl
 example/hideme.ru.conf.pl
+example/tor.conf.pl
