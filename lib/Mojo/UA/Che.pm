@@ -139,9 +139,9 @@ sub finish_tx { # логика строгая
   $self->debug_stderr( "GOOD PROXY [$proxy]")
     and $self->good_proxy($proxy)
     and return $tx
-    if ref $res || $res =~ /$self->res_success/;
+    if ref $res || $res =~ $self->res_success;
   
-  if ($res =~ /$self->res_fail/) {
+  if ($res =~ $self->res_fail) {
     $self->debug_stderr( "FAIL PROXY [$proxy] $res");
     $self->bad_proxy($proxy, $self->proxy_handler->max_try);
   } else {
@@ -230,11 +230,11 @@ Mojo::UA::Che - UserAgent for proxying async reqs by diffrent lists.
 
 =head1 VERSION
 
-Version 0.17
+Version 0.18
 
 =cut
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 
 =head1 DESCRIPTION
