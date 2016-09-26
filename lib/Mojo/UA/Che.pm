@@ -47,6 +47,7 @@ has proxy_handler => sub {
 has proxy_not => sub {[]};
 
 has res_success => qr/404/;
+has res_fail => qr/429|403|отказано|premature|Auth/i;
 
 my $pkg = __PACKAGE__;
 
@@ -140,7 +141,7 @@ sub finish_tx { # логика строгая
     and return $tx
     if ref $res || $res =~ /$self->res_success/;
   
-  if ($res =~ m'429|403|отказано|premature|Auth'i) {
+  if ($res =~ /$self->res_fail/) {
     $self->debug_stderr( "FAIL PROXY [$proxy] $res");
     $self->bad_proxy($proxy, $self->proxy_handler->max_try);
   } else {
