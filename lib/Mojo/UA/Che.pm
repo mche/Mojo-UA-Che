@@ -46,8 +46,8 @@ has proxy_handler => sub {
 
 has proxy_not => sub {[]};
 
-has res_success => qr/404/;
-has res_fail => qr/429|403|отказано|premature|Auth/i;
+has res_success => sub { qr/404/ };
+has res_fail => sub { qr/429|403|отказано|premature|Auth/i };
 
 my $pkg = __PACKAGE__;
 
@@ -230,11 +230,11 @@ Mojo::UA::Che - UserAgent for proxying async reqs by diffrent lists.
 
 =head1 VERSION
 
-Version 0.16
+Version 0.17
 
 =cut
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 
 =head1 DESCRIPTION
