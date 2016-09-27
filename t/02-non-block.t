@@ -21,7 +21,8 @@ my $limit = 2;
 my $delay = Mojo::IOLoop->delay;
 my @done = ();
 #~ my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.live-socks.net.conf.pl')}, cookie_ignore=>1);
-my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.my-proxy.com.conf.pl')}, cookie_ignore=>1);
+my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.socks-proxy.net.conf.pl')}, cookie_ignore=>1);
+#~ my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/free-proxy-list.net-anonymous-proxy.conf.pl')}, cookie_ignore=>1);
 
 subtest 'mojolicious.org' => \&test;
 

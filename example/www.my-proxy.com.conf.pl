@@ -1,6 +1,7 @@
 use Mojo::Base -strict;
 
 my $base_url = 'http://www.my-proxy.com/';
+my $re_ip = qr/((?:\d+\.){3}\d+:\d+)/;
 
 {
   proxy_handler_has => {
@@ -12,20 +13,17 @@ my $base_url = 'http://www.my-proxy.com/';
       my $err = $tx->error;
       die sprintf("Ошибка запроса [%s] списка проксей: %s %s", $self->proxy_url, $err->{code}, $err->{message})
         if $err;
-      my @list = ($tx->res->dom->at('div.content')->all_text =~ /((?:(\d+\.){4}:\d+)/g);
-      die @list;
+      my @list1 = ($tx->res->dom->at('div.content')->content =~ /$re_ip/g);
       my $links = $tx->res->dom->find('#list_nav a')->grep(sub { ! Mojo::URL->new($_->attr('href'))->is_abs})
         or die "Не нашел ссылки на списки проксей";
-      $links->map(sub {
+      (@list1, $links->map(sub {
         $self->debug_stderr("Найдена ссылка проксей ", $_->attr('href'));
         my $tx = $self->ua->get($base_url.$_->attr('href'));
         my $err = $tx->error;
         die sprintf("Ошибка запроса [%s] списка проксей: %s %s", $_->attr('href'), $err->{code}, $err->{message})
           if $err;
-        my $text = $tx->res->dom->at('div.post-body.entry-content textarea')
-          or die "Не нашел textarea списка проксей";
-        return split /\s+/, $text->content;
-        })->each;
+        return ($tx->res->dom->at('div.content')->content =~ /$re_ip/g);
+        })->each);
     },
     debug=>$ENV{DEBUG}, 
   },
