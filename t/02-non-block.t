@@ -20,7 +20,8 @@ my $dom_select = 'head title';
 my $limit = 2;
 my $delay = Mojo::IOLoop->delay;
 my @done = ();
-my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.live-socks.net.conf.pl')}, cookie_ignore=>1);
+#~ my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.live-socks.net.conf.pl')}, cookie_ignore=>1);
+my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.my-proxy.com.conf.pl')}, cookie_ignore=>1);
 
 subtest 'mojolicious.org' => \&test;
 
