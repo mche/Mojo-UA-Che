@@ -313,7 +313,7 @@ Permanent proxy. Will pass to Mojo::UserAgent->proxy->https()->http()
 
   $che->proxy('socks://127.0.0.1:9050');
 
-=head proxy_handler
+=head2 proxy_handler
 
 Object for proxy list management.
 
