@@ -21,7 +21,9 @@ my $limit = 2;
 my $delay = Mojo::IOLoop->delay;
 my @done = ();
 #~ my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.live-socks.net.conf.pl')}, cookie_ignore=>1);
-my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.socks-proxy.net.conf.pl')}, cookie_ignore=>1);
+#~ my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.socks-proxy.net.conf.pl')}, cookie_ignore=>1);
+#~ my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.my-proxy.com.conf.pl')}, cookie_ignore=>1);
+my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/www.socks24.org.conf.pl')}, cookie_ignore=>1);
 #~ my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load('example/free-proxy-list.net-anonymous-proxy.conf.pl')}, cookie_ignore=>1);
 
 subtest 'mojolicious.org' => \&test;
@@ -43,9 +45,9 @@ sub test {
 #~ $base_url = 'https://metacpan.org/pod/';
 #~ @modules = qw(Scalar::Util Mojolicious Mojo::Pg Test::More DBI DBD::Pg AnyEvent);
 #~ @done = ();
-#~ $limit = 3;
+#~ $limit = 5;
 
-#~ subtest 'metacpan.org' => \&test, $che;#->proxy_module(undef);
+#~ subtest 'metacpan.org' => \&test;#->proxy_module(undef);
 
 sub request {
   my $module = shift() || shift @modules
