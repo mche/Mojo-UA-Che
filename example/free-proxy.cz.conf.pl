@@ -25,7 +25,7 @@ c="/images/1px.png" width="16" height="16" /> </div> <script type="text/javascri
 
 =cut
 
-my @sub_url = qw(speed uptime ping date);# первые страницы разных сортировок
+my @sub_url = qw(speed);# uptime ping date);# первые страницы разных сортировок
 my $re_base64 = qr/Base64\.decode\("(.+)"\)/;
 my $headers = {'Accept-Language'=>'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'}; # !!!!
 
@@ -38,7 +38,8 @@ my $headers = {'Accept-Language'=>'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'}; # !!!!
       my $self = shift;
       # Concurrent non-blocking requests (synchronized with a delay)
       my %proxy =();
-      Mojo::IOLoop->delay(
+      my $delay = Mojo::IOLoop->delay;
+      $delay->steps(
         sub {
           my $delay = shift;
           $self->ua->get($self->proxy_url."$_/all" => $headers => $delay->begin) for @sub_url;
@@ -52,8 +53,10 @@ my $headers = {'Accept-Language'=>'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'}; # !!!!
             my $tr = $tx->res->dom->find('#proxy_list tbody tr')
               or die "Не нашел таблицы #proxy_list";
             @proxy{ $tr->map(sub {
-              join ':', map {decode_base64(($_->content =~ $re_base64)[0])}  @{$_->child_nodes}[0..1]
-                or die "не нашел ячейки строк";
+              $_->children->slice(0,1)->map( sub {$self->debug_stderr($_); decode_base64(($_->content =~ $re_base64)[0])})->join(':')->to_string;
+                #~ or die "не нашел ячейки строк";
+              #~ $self->debug_stderr(@td);
+              #~ join ':', map , @td[0..1];
             })->each }++;
           }
         }
@@ -68,8 +71,9 @@ my $headers = {'Accept-Language'=>'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'}; # !!!!
           my ($delay, @err) = @_;
           die @err if @err;
         }
-      )->wait;
-      return keys %proxy;
+      );
+      $delay->wait;
+      die keys %proxy;
     },
     #~ debug => $ENV{DEBUG},
   },

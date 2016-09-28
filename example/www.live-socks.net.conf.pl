@@ -23,7 +23,7 @@ use Mojo::Base -strict;
         return split /\s+/, $text->content;
         })->each;
     },
-    debug=>$ENV{DEBUG}, 
+    #~ debug=>1,#$ENV{DEBUG}, 
   },
-  debug => $ENV{DEBUG},
+  #~ debug => 1,#$ENV{DEBUG},
 };

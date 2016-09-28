@@ -26,7 +26,7 @@ has ua => sub {shift->mojo_ua};
 
 has mojo_ua_has => sub { {} }; # опции для Mojo::UA->new
 
-has debug => $ENV{DEBUG_Mojo_UA_Che};
+has debug => $ENV{DEBUG_Mojo_UA_Che} || 0;
 
 has cookie_ignore => 0;
 
@@ -335,7 +335,7 @@ Arrayref of domain srings. Will pass to Mojo::UserAgent->proxy->not().
 
 Common HTTP methods DELETE GET HEAD OPTIONS PATCH POST PUT like Mojo::UserAgent.
 
-=head1 Tests
+=head1 TESTING
 
   $ perl Makefile.PL
   $ Mojo_UA_Che_Config='example/www.live-socks.net.conf.pl' DEBUG_Mojo_UA_Che=1 DEBUG_Mojo_UA_Che_Proxy=1 make test

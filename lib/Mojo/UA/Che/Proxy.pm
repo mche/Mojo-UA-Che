@@ -29,7 +29,7 @@ has using_proxy => sub { {} }; # фрмат записи 'полный прок�
 
 has [qw(proxy_url parse_proxy_url)];#config_file
 
-has debug => $ENV{DEBUG_Mojo_UA_Che_Proxy};
+has debug => $ENV{DEBUG_Mojo_UA_Che_Proxy} || 0;
 
 #~ sub new {
   #~ my $class = shift;

@@ -25,7 +25,7 @@ my $re_ip = qr/((?:\d+\.){3}\d+:\d+)/;
         return ($tx->res->dom->at('div.content')->content =~ /$re_ip/g);
         })->each);
     },
-    debug=>$ENV{DEBUG}, 
+    #~ debug=>$ENV{DEBUG}, 
   },
-  debug => $ENV{DEBUG},
+  #~ debug => $ENV{DEBUG},
 };

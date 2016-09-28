@@ -17,8 +17,8 @@ use Mojo::Base -strict;
         return $proxy;
         })->each;
     },
-    debug=>$ENV{DEBUG}, 
+    #~ debug=>$ENV{DEBUG}, 
   },
-  debug => $ENV{DEBUG},
+  #~ debug => $ENV{DEBUG},
   
 };
