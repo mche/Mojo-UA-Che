@@ -25,7 +25,7 @@ c="/images/1px.png" width="16" height="16" /> </div> <script type="text/javascri
 
 =cut
 
-my @sub_url = qw(speed);# uptime ping date);# первые страницы разных сортировок
+my @sub_url = qw(speed uptime ping date);# первые страницы разных сортировок
 my $re_base64 = qr/Base64\.decode\("(.+)"\)/;
 my $headers = {'Accept-Language'=>'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'}; # !!!!
 
@@ -41,18 +41,26 @@ my $headers = {'Accept-Language'=>'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'}; # !!!!
       for my $sub_url (@sub_url) {
         my $tx = $self->ua->get($self->proxy_url."$sub_url/all" => $headers);
         my $err = $tx->error;
+        $self->debug_stderr('Повтор ', $tx->req->url)
+          and redo
+          if $err && $err->{code} eq '401';
         die sprintf("Ошибка запроса [%s] списка проксей: %s %s", $tx->req->url, $err->{code}, $err->{message})
           if $err;
         my $tr = $tx->res->dom->find('#proxy_list tbody tr')
           or die "Не нашел таблицы #proxy_list";
         @proxy{ $tr->map(sub {
-          $_->children->slice(0..1)->map( sub {$self->debug_stderr($_); decode_base64(($_->content =~ $re_base64)[0])})->join(':')->to_string;
+          $_->child_nodes # td
+            ->slice(0..1)
+            ->grep(sub {defined $_})
+            ->map( sub { decode_base64(($_->content =~ $re_base64)[0]); })
+            ->join(':')
+            ->to_string; #$self->debug_stderr($_->tag, "===\n");
             #~ or die "не нашел ячейки строк";
           #~ $self->debug_stderr(@td);
           #~ join ':', map , @td[0..1];
         })->each }++;
       }
-      die keys %proxy;
+      return keys %proxy;
     },
     #~ debug => $ENV{DEBUG},
   },
