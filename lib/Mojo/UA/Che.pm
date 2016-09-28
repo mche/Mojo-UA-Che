@@ -26,7 +26,7 @@ has ua => sub {shift->mojo_ua};
 
 has mojo_ua_has => sub { {} }; # опции для Mojo::UA->new
 
-has debug => 0;
+has debug => $ENV{DEBUG_Mojo_UA_Che};
 
 has cookie_ignore => 0;
 

@@ -27,8 +27,9 @@ has list_time_fresh => 1200; # секунды свежести списка
 has _good_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 has using_proxy => sub { {} }; # фрмат записи 'полный прокси'=><количество фейлов>
 
-has [qw(debug  proxy_url parse_proxy_url)];#config_file
+has [qw(proxy_url parse_proxy_url)];#config_file
 
+has debug => $ENV{DEBUG_Mojo_UA_Che_Proxy};
 
 #~ sub new {
   #~ my $class = shift;
