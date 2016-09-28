@@ -38,6 +38,39 @@ my $headers = {'Accept-Language'=>'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'}; # !!!!
       my $self = shift;
       # Concurrent non-blocking requests (synchronized with a delay)
       my %proxy =();
+      for my $sub_url (@sub_url) {
+        my $tx = $self->ua->get($self->proxy_url."$sub_url/all" => $headers);
+        my $err = $tx->error;
+        die sprintf("Ошибка запроса [%s] списка проксей: %s %s", $tx->req->url, $err->{code}, $err->{message})
+          if $err;
+        my $tr = $tx->res->dom->find('#proxy_list tbody tr')
+          or die "Не нашел таблицы #proxy_list";
+        @proxy{ $tr->map(sub {
+          $_->children->slice(0..1)->map( sub {$self->debug_stderr($_); decode_base64(($_->content =~ $re_base64)[0])})->join(':')->to_string;
+            #~ or die "не нашел ячейки строк";
+          #~ $self->debug_stderr(@td);
+          #~ join ':', map , @td[0..1];
+        })->each }++;
+      }
+      die keys %proxy;
+    },
+    #~ debug => $ENV{DEBUG},
+  },
+  #~ debug => $ENV{DEBUG},
+  
+};
+
+__END__
+
+{
+  proxy_handler_has => {
+    ua_name => 'Mozilla/5.0 (X11; Linux x86_64; rv:45.7) Gecko/20100101 Firefox/45.7',
+    proxy_url => 'http://free-proxy.cz/ru/proxylist/country/US/socks5/',
+    list_time_fresh => 3*60*60,
+    parse_proxy_url => sub {
+      my $self = shift;
+      # Concurrent non-blocking requests (synchronized with a delay)
+      my %proxy =();
       my $delay = Mojo::IOLoop->delay;
       $delay->steps(
         sub {
