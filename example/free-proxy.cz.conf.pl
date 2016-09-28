@@ -25,8 +25,9 @@ c="/images/1px.png" width="16" height="16" /> </div> <script type="text/javascri
 
 =cut
 
-my @sub_url = qw(speed uptime ping date);
+my @sub_url = qw(speed uptime ping date);# первые страницы разных сортировок
 my $re_base64 = qr/Base64\.decode\("(.+)"\)/;
+my $headers = {'Accept-Language'=>'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'}; # !!!!
 
 {
   proxy_handler_has => {
@@ -40,7 +41,7 @@ my $re_base64 = qr/Base64\.decode\("(.+)"\)/;
       Mojo::IOLoop->delay(
         sub {
           my $delay = shift;
-          $self->ua->get($self->proxy_url."$_/all" => {'Accept-Language'=>'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3'} => $delay->begin) for @sub_url;
+          $self->ua->get($self->proxy_url."$_/all" => $headers => $delay->begin) for @sub_url;
         },
         sub {
           my ($delay, @tx) = @_;
@@ -70,8 +71,8 @@ my $re_base64 = qr/Base64\.decode\("(.+)"\)/;
       )->wait;
       return keys %proxy;
     },
-    debug => $ENV{DEBUG},
+    #~ debug => $ENV{DEBUG},
   },
-  debug => $ENV{DEBUG},
+  #~ debug => $ENV{DEBUG},
   
 };
