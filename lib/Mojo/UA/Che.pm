@@ -335,6 +335,10 @@ Arrayref of domain srings. Will pass to Mojo::UserAgent->proxy->not().
 
 Common HTTP methods DELETE GET HEAD OPTIONS PATCH POST PUT like Mojo::UserAgent.
 
+=head1 Tests
+
+  $ perl Makefile.PL
+  $ Mojo_UA_Che_Config='example/www.live-socks.net.conf.pl' DEBUG_Mojo_UA_Che=1 DEBUG_Mojo_UA_Che_Proxy=1 make test
 
 =head1 SEE ALSO
 
