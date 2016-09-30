@@ -230,11 +230,11 @@ Mojo::UA::Che - UserAgent for proxying async reqs by diffrent lists.
 
 =head1 VERSION
 
-Version 0.19
+Version 0.20
 
 =cut
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 
 =head1 DESCRIPTION
@@ -335,7 +335,7 @@ Arrayref of domain srings. Will pass to Mojo::UserAgent->proxy->not().
 
 Common HTTP methods DELETE GET HEAD OPTIONS PATCH POST PUT like Mojo::UserAgent.
 
-=head1 TESTING
+=head1 TEST & DEBUG
 
   $ perl Makefile.PL
   $ Mojo_UA_Che_Config='example/www.live-socks.net.conf.pl' DEBUG_Mojo_UA_Che=1 DEBUG_Mojo_UA_Che_Proxy=1 make test
