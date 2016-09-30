@@ -14,7 +14,7 @@ has ua => sub {
     %{$self->ua_has},
   );
   $ua->transactor->name($self->ua_name);
-  $ua->proxy->http($self->proxy)->https($self->proxy)
+  $ua->proxy->http($self->ua_proxy)->https($self->ua_proxy)
     if $self->ua_proxy;
   return $ua;
 };

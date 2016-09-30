@@ -230,11 +230,11 @@ Mojo::UA::Che - UserAgent for proxying async reqs by diffrent lists.
 
 =head1 VERSION
 
-Version 0.21
+Version 0.22
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 
 =head1 DESCRIPTION
