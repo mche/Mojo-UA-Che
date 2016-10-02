@@ -18,9 +18,13 @@ use Mojolicious::Plugin::Config;
 my $config = $ENV{Mojo_UA_Che_Config};
 
 my $base_url = 'https://raw.githubusercontent.com/kraih/mojo/master/lib/Mojo/';
-my @modules = qw(UserAgent IOLoop DOM Asset Util Base);
+my @modules = qw(UserAgent.pm IOLoop.pm DOM.pm Asset.pm Util.pm Base.pm);
 my $limit = 1;
 my $delay = Mojo::IOLoop->delay;
+$delay->on(error => sub {
+  my ($delay, $err) = @_;
+  say STDERR $err;
+});
 my @done = ();
 my $che = Mojo::UA::Che->new(%{Mojolicious::Plugin::Config->new->load($config)}, cookie_ignore=>1);
 
@@ -47,9 +51,11 @@ sub request {
   my $end = $delay->begin;
   $che->get( $url => sub {
     my ($ua, $tx) = @_;
-    my $res = $tx->{_res} || $che->process_tx($tx,);
+    #~ my $res = $tx->{_res} || $che->process_tx($tx,);
+    
     say STDERR "DONE: [$module]";
-    push @done, process_res($res);
+    #~ push @done, process_res($res);
+    push @done, $tx->res;
     request();
     #~ say STDERR "EXIT request CB";
     $end->();
@@ -60,8 +66,8 @@ sub process_res {
   my $res = shift;
   return $res
     unless ref $res;
-  $res->content->asset->move_to('/dev/null');
-  return $res->content->asset->size;
+  #~ $res->content->asset->move_to('/dev/null');
+  #~ return $res->content->asset->size;
   
 }
 
