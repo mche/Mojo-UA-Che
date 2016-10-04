@@ -85,8 +85,7 @@ sub mojo_ua {
   $ua->cookie_jar->ignore(sub { 1 })
     if $self->cookie_ignore;
   # Change name of user agent
-  my $ua_names = $self->ua_names;
-  $ua->transactor->name($self->ua_name || $ua_names->[rand @$ua_names]);
+  $ua->transactor->name($self->ua_name || $self->ua_names->[int rand @{$self->ua_names}]);
   
   $ua->proxy($self->proxy_handler)
     if $self->proxy_handler;
