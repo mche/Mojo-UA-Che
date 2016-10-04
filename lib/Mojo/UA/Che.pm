@@ -73,7 +73,7 @@ sub request {# HEART OF MODULE
       $tx = $_tx;
     } if $self->proxy_handler;
     
-    $self->start_tx($tx);
+    $self->prepare_tx($tx);
     $self->ua->start($tx, $finish_tx || $cb || ());
   
 }
@@ -97,15 +97,13 @@ sub mojo_ua {
   $ua->proxy->not($self->proxy_not)
     if $self->proxy_not;
   
-  #~ $ua->on(start=>sub {$self->on_start_tx(@_)});
-  
   return $ua;
 }
 
-sub start_tx {
+sub prepare_tx {
   my ($self, $tx) = @_;
   return unless $self->proxy_handler;
-  $self->debug_stderr( "START TX \t", $tx->req->url);
+  $self->debug_stderr( "PREPARE TX \t", $tx->req->url);
   $self->prepare_proxy($tx);
   #~ $tx->once(finish => sub {$self->on_finish_tx(@_)});
 }
@@ -234,11 +232,11 @@ Mojo::UA::Che - UserAgent for proxying async reqs by diffrent lists.
 
 =head1 VERSION
 
-Version 0.24
+Version 0.25
 
 =cut
 
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 
 =head1 DESCRIPTION
