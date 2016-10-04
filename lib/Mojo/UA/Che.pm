@@ -49,16 +49,17 @@ has proxy_not => sub {[]};
 has res_success => sub { qr/404/ };
 has res_fail => sub { qr/429|403|отказано|premature|Auth/i };
 
-my $pkg = __PACKAGE__;
+#~ my $pkg = __PACKAGE__;
 
-
-monkey_patch __PACKAGE__, $_, sub { shift->request($_, @_) }
-  for qw(delete get head options patch post put);# Common HTTP methods
+for my $method (qw(delete get head options patch post put)) {
+  monkey_patch __PACKAGE__, $method, sub { shift->request($method, @_) };# Common HTTP methods
+}
 
 sub request {# HEART OF MODULE
     my ($self, $method) = (shift, lc(shift));
     my @req_args = @_;
     my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
+    $self->change_ua_name;
     my $tx = $self->ua->build_tx($method, @req_args);
     my $finish_tx = sub {
       my ($ua, $_tx) = @_;
@@ -157,6 +158,8 @@ sub process_tx {
   my $res = $tx->res;
   
   if (my $err = $tx->error) {
+    $self->dump($tx->req)
+      if $err->{code} && $err->{code} =~ /400/;
     $res = $err->{code} || $err->{message} || 'unknown error';
     utf8::decode($res);
   }
@@ -194,6 +197,11 @@ sub load_class {
     and ($e eq 1 or warn("None load_class[$class]: ", $e))
     and return undef;
   return $class;
+}
+
+sub change_ua_name {
+  my ($self,) = shift;
+  $self->ua->transactor->name($self->ua_name || $self->ua_names->[int rand @{$self->ua_names}]);
 }
 
 our $AUTOLOAD;
