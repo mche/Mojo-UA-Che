@@ -158,8 +158,7 @@ sub process_tx {
   my ($self, $tx) = @_;
   my $res = $tx->res;
   
-  if ($tx->error) {
-    my $err = $tx->error;
+  if (my $err = $tx->error) {
     $res = $err->{code} || $err->{message} || 'unknown error';
     utf8::decode($res);
   }
@@ -230,11 +229,11 @@ Mojo::UA::Che - UserAgent for proxying async reqs by diffrent lists.
 
 =head1 VERSION
 
-Version 0.22
+Version 0.23
 
 =cut
 
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 
 =head1 DESCRIPTION
