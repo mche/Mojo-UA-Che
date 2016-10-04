@@ -24,10 +24,13 @@ has ua_names => sub {[
 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
 'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
 'Googlebot/2.1 (+http://www.google.com/bot.html)',
+'Googlebot-Image/1.0',
 'Googlebot-Video/1.0',
 'Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)',
 'Mozilla/5.0 (compatible; YandexMedia/3.0; +http://yandex.com/bots)',
 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)',
+  'Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)',
+  
   
 ]};
 
