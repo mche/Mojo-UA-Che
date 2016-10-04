@@ -77,10 +77,6 @@ sub request {
   
 }
 
-#~ sub new {
-  #~ my $self = shift->SUPER::new(@_);
-#~ }
-
 sub mojo_ua {
   my $self = shift;
   my $ua = Mojo::UserAgent->new(%{$self->mojo_ua_has});
