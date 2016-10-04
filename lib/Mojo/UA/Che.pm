@@ -51,11 +51,11 @@ has res_fail => sub { qr/429|403|отказано|premature|Auth/i };
 
 my $pkg = __PACKAGE__;
 
-# HEART OF MODULE
+
 monkey_patch __PACKAGE__, $_, sub { shift->request($_, @_) }
   for qw(delete get head options patch post put);# Common HTTP methods
 
-sub request {
+sub request {# HEART OF MODULE
     my ($self, $method) = (shift, lc(shift));
     my @req_args = @_;
     my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
