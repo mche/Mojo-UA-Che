@@ -53,15 +53,19 @@ my $pkg = __PACKAGE__;
 
 # HEART OF MODULE
 for my $method (qw(delete get head options patch post put)) {# Common HTTP methods
-  monkey_patch __PACKAGE__, $method, sub {
-    my $self = shift;
-    my @args = @_;
+  monkey_patch __PACKAGE__, $method, sub { shift->request($method, @_) };
+
+}
+
+sub request {
+    my ($self, $method) = (shift, lc(shift));
+    my @req_args = @_;
     my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
     my $tx = $self->ua->build_tx($method, @_);
     my $finish_tx = sub {
       my ($ua, $_tx) = @_;
       $self->debug_stderr( "REBUILD TX on bad response \t", $_tx->req->url)
-        and return $self->$method(@args)
+        and return $self->request($method, @req_args)
         unless $self->finish_tx($_tx);
       $self->debug_stderr( "FINISH TX by callback \t", $_tx->req->url)
         and return $ua->$cb($_tx)
@@ -72,7 +76,7 @@ for my $method (qw(delete get head options patch post put)) {# Common HTTP metho
     
     $self->start_tx($tx);
     $self->ua->start($tx, $finish_tx || $cb);
-  };
+  
 }
 
 #~ sub new {
