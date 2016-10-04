@@ -66,9 +66,11 @@ sub request {# HEART OF MODULE
         and $self->change_ua_name
         and return $self->request($method, @req_args)
         unless $self->finish_tx($_tx);
+      
       $self->debug_stderr( "FINISH TX by callback \t", $_tx->req->url)
         and return $ua->$cb($_tx)
         if $cb;
+      
       $self->debug_stderr( "PREV TX[$tx] = NEXT TX[$_tx]");
       $tx = $_tx;
     } if $self->proxy_handler;
