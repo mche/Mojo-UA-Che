@@ -52,16 +52,14 @@ has res_fail => sub { qr/429|403|отказано|premature|Auth/i };
 my $pkg = __PACKAGE__;
 
 # HEART OF MODULE
-for my $method (qw(delete get head options patch post put)) {# Common HTTP methods
-  monkey_patch __PACKAGE__, $method, sub { shift->request($method, @_) };
-
-}
+monkey_patch __PACKAGE__, $_, sub { shift->request($_, @_) }
+  for qw(delete get head options patch post put);# Common HTTP methods
 
 sub request {
     my ($self, $method) = (shift, lc(shift));
     my @req_args = @_;
     my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
-    my $tx = $self->ua->build_tx($method, @_);
+    my $tx = $self->ua->build_tx($method, @req_args);
     my $finish_tx = sub {
       my ($ua, $_tx) = @_;
       $self->debug_stderr( "REBUILD TX on bad response \t", $_tx->req->url)
