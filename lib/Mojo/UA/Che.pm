@@ -117,7 +117,7 @@ sub prepare_proxy {#  set proxy
     if $tx->req->proxy;# && ! delete $tx->{change_proxy};
   #~ $tx->{proxy_tried} ||= 0;
   my $proxy = $self->proxy_handler->use_proxy;
-  $self->proxy_handler->http($proxy)->https($proxy)->prepare($tx);
+  $self->proxy->http($proxy)->https($proxy)->prepare($tx);
   $self->debug_stderr( "SET PROXY [$proxy] for ", $tx->req->url);
   #~ delete $tx->{_change_proxy};
   return $tx;
