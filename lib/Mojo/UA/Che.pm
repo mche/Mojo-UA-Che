@@ -131,7 +131,7 @@ sub prepare_proxy {#  set proxy
     if $tx->req->proxy;# && ! delete $tx->{change_proxy};
   #~ $tx->{proxy_tried} ||= 0;
   my $proxy = $self->proxy_handler->use_proxy;
-  $self->proxy->http($proxy)->https($proxy)->prepare($tx);
+  $self->ua->proxy->http($proxy)->https($proxy)->prepare($tx);
   $self->debug_stderr( "SET PROXY [$proxy] for ", $tx->req->url);
   #~ delete $tx->{_change_proxy};
   return $tx;
@@ -248,11 +248,11 @@ Mojo::UA::Che - UserAgent for proxying async reqs by diffrent lists.
 
 =head1 VERSION
 
-Version 0.25
+Version 0.26
 
 =cut
 
-our $VERSION = '0.25';
+our $VERSION = '0.26';
 
 
 =head1 DESCRIPTION

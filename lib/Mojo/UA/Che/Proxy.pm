@@ -41,6 +41,12 @@ has debug => $ENV{DEBUG_Mojo_UA_Che_Proxy} || 0;
   
 #~ }
 
+sub prepare {# overload
+  my $self = shift;
+  return if $_[0]->req->proxy;
+  $self->SUPER::prepare(@_);
+}
+
 sub proxy_load {# загрузка списка
   my $self = shift;
   die "Нет адреса скачки списка проксей (has proxy_url)"
